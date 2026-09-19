@@ -2,6 +2,7 @@ import regex as re
 import os
 import multiprocessing
 from .chunking import find_chunk_boundaries
+from collections import defaultdict
 
 NUM_WORKERS = os.cpu_count() or 1
 NUM_CHUNKS = NUM_WORKERS * 2
@@ -62,36 +63,34 @@ def train_bpe(
 
     merge_steps = vocab_size - len(vocab)
 
-
+    pair_to_count = {}  # adjacent_pair -> count
+    pair_to_pre_token = defaultdict(set)  # adjacent_pair -> pre_token it belongs in
+    for pre_token, count in global_pre_token_count.items():
+        for i in range(len(pre_token) - 1):
+            pair = (pre_token[i], pre_token[i + 1])
+            pair_to_count[pair] = pair_to_count.get(pair, 0) + count
+            pair_to_pre_token[pair].add(pre_token)
 
     # Repeatedly learn the most frequent adjacent byte-pair and merge it
     # until the requested vocabulary size is reached or no pairs remain.
     while merge_steps > 0:
-        adjacent_pairs = {}
-        for pre_token, count in global_pre_token_count.items():
-            for i in range(len(pre_token) - 1):
-                sub_token = pre_token[i]
-                adjacent_sub_token = pre_token[i + 1]
-                adjacent_pairs[(sub_token, adjacent_sub_token)] = adjacent_pairs.get((sub_token, adjacent_sub_token),
-                                                                                     0) + count
-        if not adjacent_pairs:
+
+        if not pair_to_count:
             break
 
         pair_to_merge = max(
-            adjacent_pairs,
+            pair_to_count,
             # pair with max frequency and if frequencies tie, break lexicographically
-            key=lambda pair: (adjacent_pairs[pair], pair)
+            key=lambda pair: (pair_to_count[pair], pair)
         )
 
         merges.append(pair_to_merge)
         merged_token = pair_to_merge[0] + pair_to_merge[1]
         vocab[len(vocab)] = merged_token
 
-        # Apply the selected BPE merge to every pre-token:
-        # scan left-to-right, replace each occurrence of the selected pair
-        # with the merged token, preserve the original frequency count.
-        updated_global_pre_token_count: dict[tuple[bytes, ...], int] = {}
-        for pre_token, count in global_pre_token_count.items():
+        affected_pre_tokens = list(pair_to_pre_token[pair_to_merge])
+
+        for pre_token in affected_pre_tokens:
             new_pre_token = []
             i = 0
             while i < len(pre_token):
@@ -103,9 +102,30 @@ def train_bpe(
                     i += 1
 
             new_pre_token_tuple = tuple(new_pre_token)
-            updated_global_pre_token_count[new_pre_token_tuple] = count #every token
+            frequency_old_pre_token = global_pre_token_count[pre_token]
+            del global_pre_token_count[pre_token]
 
-        global_pre_token_count = updated_global_pre_token_count
+            # remove pre_token's contribution to all old pairs
+            for i in range(len(pre_token) - 1):
+                pair = (pre_token[i], pre_token[i + 1])
+                pair_to_count[pair] -= frequency_old_pre_token
+                pair_to_pre_token[pair].discard(pre_token)
+
+                # Only delete this pair if its count reaches 0,
+                # because it may still exist in other pre-tokens.
+                if pair_to_count[pair] == 0:
+                    del pair_to_count[pair]
+                    del pair_to_pre_token[pair]
+
+            # add all new pairs
+            for i in range(len(new_pre_token_tuple) - 1):
+                pair = (new_pre_token_tuple[i], new_pre_token_tuple[i + 1])
+                pair_to_count[pair] = pair_to_count.get(pair, 0) + frequency_old_pre_token
+                pair_to_pre_token[pair].add(new_pre_token_tuple)
+
+            global_pre_token_count[new_pre_token_tuple] = global_pre_token_count.get(new_pre_token_tuple,
+                                                                                     0) + frequency_old_pre_token
+
         merge_steps -= 1
 
     return vocab, merges
