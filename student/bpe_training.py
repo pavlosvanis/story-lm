@@ -14,9 +14,21 @@ def train_bpe(
         special_tokens: list[str],
 ) -> tuple[dict[int, bytes], list[tuple[bytes, bytes]]]:
     """
-        Given a path to an input text file, the desired vocab size, and special tokens,
-        trains a BPE tokenizer returning the vocabulary and the merges produced from training.
+        Trains a byte-level BPE tokenizer on a text file.
+
+        Pre-tokenizes the input corpus, counts adjacent byte-pair frequencies,
+        and repeatedly merges the most frequent pair until the requested
+        vocabulary size is reached or no mergeable pairs remain.
+
+        Args:
+            input_path: Path to the training text file.
+            vocab_size: Desired final vocabulary size.
+            special_tokens: Tokens treated as hard boundaries during training.
+
+        Returns:
+            A tuple containing the learned vocabulary and ordered BPE merge rules.
     """
+
     if "<|endoftext|>" in special_tokens:
         special_token = "<|endoftext|>".encode("utf-8")
 
@@ -138,9 +150,16 @@ def pre_tokenize_chunk(
         special_tokens: list[str],
 ) -> dict[tuple[bytes, ...], int]:
     """
-    Read and pre-tokenize a byte range from the input file.
+        Pre-tokenizes a byte range from the input file.
 
-    Returns the frequency of each pre-token within the chunk.
+        Args:
+            input_path: Path to the input text file.
+            start: Starting byte offset of the chunk.
+            end: Ending byte offset of the chunk.
+            special_tokens: Tokens treated as hard pre-tokenization boundaries.
+
+        Returns:
+            Frequencies of pre-tokens found within the chunk.
     """
 
     with open(input_path, "rb") as file:  # rb reads file as raw bytes
@@ -155,11 +174,18 @@ def pre_tokenize_text(
         special_tokens: list[str],
 ) -> dict[tuple[bytes, ...], int]:
     """
-    Pre-tokenize text while treating special tokens as hard boundaries.
+        Pre-tokenizes text into byte-level token sequences.
 
-    Splits the input around special tokens, applies the regex pre-tokenizer
-    to each remaining segment, and returns pre-token frequencies represented
-    as tuples of individual UTF-8 bytes.
+        Splits the input around special tokens, applies the pre-tokenization
+        regex to each remaining segment, and represents each pre-token as a
+        tuple of individual UTF-8 bytes.
+
+        Args:
+            text: Text to pre-tokenize.
+            special_tokens: Tokens treated as hard pre-tokenization boundaries.
+
+        Returns:
+            Frequencies of the resulting byte-level pre-tokens.
     """
 
     if special_tokens:
@@ -190,6 +216,19 @@ def pre_tokenize_text(
 
 
 def initialize_vocab(special_tokens: list[str], ) -> dict[int, bytes]:
+    """
+        Initializes the byte-level BPE vocabulary.
+
+        Creates one token for each possible byte value and appends the provided
+        special tokens.
+
+        Args:
+            special_tokens: Special tokens to add to the base byte vocabulary.
+
+        Returns:
+            Mapping from token IDs to token byte sequences.
+    """
+
     vocab = {i: bytes([i]) for i in range(256)}  # add all 256 bytes
 
     for token in special_tokens:  # add special tokens
