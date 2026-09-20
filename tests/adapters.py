@@ -10,12 +10,13 @@ from jaxtyping import Bool, Float, Int
 from torch import Tensor
 
 from student.bpe_training import train_bpe
-from student import tokenizer
-from student import linear
-from student import embedding
-from student import rmsnorm
-from student import positionwise_feedforward
-from student import rope
+from student.tokenizer import Tokenizer
+from student.linear import Linear
+from student.embedding import Embedding
+from student.rmsnorm import RMSNorm
+from student.positionwise_feedforward import SwiGLU
+from student.rope import RotaryPositionalEmbedding
+from student.softmax import softmax
 
 
 def run_linear(
@@ -36,7 +37,7 @@ def run_linear(
     Returns:
         Float[Tensor, "... d_out"]: The transformed output of your linear module.
     """
-    linear_layer = linear.Linear(in_features=d_in, out_features=d_out)
+    linear_layer = Linear(in_features=d_in, out_features=d_out)
     with torch.no_grad():  # prevents PyTorch from treating that copy operation as something that should be part of training
         linear_layer.weight.copy_(weights)
 
@@ -61,7 +62,7 @@ def run_embedding(
     Returns:
         Float[Tensor, "... d_model"]: Batch of embeddings returned by your Embedding layer.
     """
-    embedding_layer = embedding.Embedding(vocab_size, d_model)
+    embedding_layer = Embedding(vocab_size, d_model)
     with torch.no_grad():
         embedding_layer.weight.copy_(weights)
 
@@ -90,7 +91,7 @@ def run_swiglu(
     Returns:
         Float[Tensor, "... d_model"]: Output embeddings of the same shape as the input embeddings.
     """
-    swiglu_layer = positionwise_feedforward.SwiGLU(d_model, d_ff)
+    swiglu_layer = SwiGLU(d_model, d_ff)
 
     with torch.no_grad():
         swiglu_layer.w1.weight.copy_(w1_weight)
@@ -218,7 +219,7 @@ def run_rope(
     Returns:
         Float[Tensor, " ... sequence_length d_k"]: Tensor with RoPEd input.
     """
-    rope_layer = rope.RotaryPositionalEmbedding(theta, d_k, max_seq_len)
+    rope_layer = RotaryPositionalEmbedding(theta, d_k, max_seq_len)
     return rope_layer(in_query_or_key, token_positions)
 
 
@@ -399,7 +400,7 @@ def run_rmsnorm(
         RMSNorm of the `in_features`.
     """
 
-    rms_layer = rmsnorm.RMSNorm(d_model, eps)
+    rms_layer = RMSNorm(d_model, eps)
     with torch.no_grad():
         rms_layer.weight.copy_(weights)
 
@@ -456,7 +457,7 @@ def run_softmax(in_features: Float[Tensor, " ..."], dim: int) -> Float[Tensor, "
         Float[Tensor, "..."]: Tensor of with the same shape as `in_features` with the output of
         softmax normalizing the specified `dim`.
     """
-    raise NotImplementedError
+    return softmax(in_features, dim)
 
 
 def run_cross_entropy(
@@ -584,7 +585,7 @@ def get_tokenizer(
     Returns:
         A BPE tokenizer that uses the provided vocab, merges, and special tokens.
     """
-    return tokenizer.Tokenizer(vocab, merges, special_tokens)
+    return Tokenizer(vocab, merges, special_tokens)
 
 
 def run_train_bpe(
