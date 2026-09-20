@@ -14,6 +14,7 @@ from student import tokenizer
 from student import linear
 from student import embedding
 from student import rmsnorm
+from student import positionwise_feedforward
 
 
 def run_linear(
@@ -38,7 +39,7 @@ def run_linear(
     with torch.no_grad():  # prevents PyTorch from treating that copy operation as something that should be part of training
         linear_layer.weight.copy_(weights)
 
-    return linear_layer.forward(in_features)
+    return linear_layer(in_features)
 
 
 def run_embedding(
@@ -63,7 +64,7 @@ def run_embedding(
     with torch.no_grad():
         embedding_layer.weight.copy_(weights)
 
-    return embedding_layer.forward(token_ids)
+    return embedding_layer(token_ids)
 
 
 def run_swiglu(
@@ -88,14 +89,14 @@ def run_swiglu(
     Returns:
         Float[Tensor, "... d_model"]: Output embeddings of the same shape as the input embeddings.
     """
-    # Example:
-    # If your state dict keys match, you can use `load_state_dict()`
-    # swiglu.load_state_dict(weights)
-    # You can also manually assign the weights
-    # swiglu.w1.weight.data = w1_weight
-    # swiglu.w2.weight.data = w2_weight
-    # swiglu.w3.weight.data = w3_weight
-    raise NotImplementedError
+    swiglu_layer = positionwise_feedforward.SwiGLU(d_model, d_ff)
+
+    with torch.no_grad():
+        swiglu_layer.w1.weight.copy_(w1_weight)
+        swiglu_layer.w2.weight.copy_(w2_weight)
+        swiglu_layer.w3.weight.copy_(w3_weight)
+
+    return swiglu_layer(in_features)
 
 
 def run_scaled_dot_product_attention(
@@ -399,7 +400,7 @@ def run_rmsnorm(
     with torch.no_grad():
         rms_layer.weight.copy_(weights)
 
-    return rms_layer.forward(in_features)
+    return rms_layer(in_features)
 
 
 def run_silu(in_features: Float[Tensor, " ..."]) -> Float[Tensor, " ..."]:
