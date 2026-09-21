@@ -17,6 +17,8 @@ from student.rmsnorm import RMSNorm
 from student.positionwise_feedforward import SwiGLU
 from student.rope import RotaryPositionalEmbedding
 from student.softmax import softmax
+from student.scaled_dot_product_attention import scaled_dot_product_attention
+from student.multi_head_self_attention import CausalMultiheadSelfAttention
 
 
 def run_linear(
@@ -119,7 +121,7 @@ def run_scaled_dot_product_attention(
     Returns:
         Float[Tensor, " ... queries d_v"]: Output of SDPA
     """
-    raise NotImplementedError
+    return scaled_dot_product_attention(Q, K, V, mask)
 
 
 def run_multihead_self_attention(
@@ -155,7 +157,16 @@ def run_multihead_self_attention(
         Float[Tensor, " ... sequence_length d_out"]: Tensor with the output of running your optimized, batched multi-headed attention
         implementation with the given QKV projection weights and input features.
     """
-    raise NotImplementedError
+    multihead_self_attention_layer = CausalMultiheadSelfAttention(d_model, num_heads, device=q_proj_weight.device,
+                                                                  dtype=q_proj_weight.dtype)
+
+    with torch.no_grad():
+        multihead_self_attention_layer.q_proj.weight.copy_(q_proj_weight)
+        multihead_self_attention_layer.k_proj.weight.copy_(k_proj_weight)
+        multihead_self_attention_layer.v_proj.weight.copy_(v_proj_weight)
+        multihead_self_attention_layer.output_proj.weight.copy_(o_proj_weight)
+
+    return multihead_self_attention_layer(in_features)
 
 
 def run_multihead_self_attention_with_rope(
@@ -197,7 +208,18 @@ def run_multihead_self_attention_with_rope(
         Float[Tensor, " ... sequence_length d_out"]: Tensor with the output of running your optimized, batched multi-headed attention
         implementation with the given QKV projection weights and input features.
     """
-    raise NotImplementedError
+    rope = RotaryPositionalEmbedding(theta, d_model // num_heads, max_seq_len)
+
+    multihead_self_attention_layer = CausalMultiheadSelfAttention(d_model, num_heads, rope, device=q_proj_weight.device,
+                                                                  dtype=q_proj_weight.dtype)
+
+    with torch.no_grad():
+        multihead_self_attention_layer.q_proj.weight.copy_(q_proj_weight)
+        multihead_self_attention_layer.k_proj.weight.copy_(k_proj_weight)
+        multihead_self_attention_layer.v_proj.weight.copy_(v_proj_weight)
+        multihead_self_attention_layer.output_proj.weight.copy_(o_proj_weight)
+
+    return multihead_self_attention_layer(in_features, token_positions)
 
 
 def run_rope(
@@ -221,7 +243,6 @@ def run_rope(
     """
     rope_layer = RotaryPositionalEmbedding(theta, d_k, max_seq_len)
     return rope_layer(in_query_or_key, token_positions)
-
 
 
 def run_transformer_block(
