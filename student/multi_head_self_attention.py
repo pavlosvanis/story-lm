@@ -10,8 +10,7 @@ from student.scaled_dot_product_attention import scaled_dot_product_attention
 
 
 class CausalMultiheadSelfAttention(nn.Module):
-    def __init__(self, d_model: int, num_heads: int, rope: RotaryPositionalEmbedding | None = None, device=None,
-                 dtype=None):
+    def __init__(self, d_model: int, num_heads: int, rope: RotaryPositionalEmbedding | None = None, device: torch.device | None = None, dtype: torch.dtype | None = None):
         super().__init__()
         assert (d_model % num_heads == 0)
 

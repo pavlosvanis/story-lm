@@ -19,6 +19,8 @@ from student.rope import RotaryPositionalEmbedding
 from student.softmax import softmax
 from student.scaled_dot_product_attention import scaled_dot_product_attention
 from student.multi_head_self_attention import CausalMultiheadSelfAttention
+from student.transformer_block import TransformerBlock
+from student.transformer_lm import TransformerLM
 
 
 def run_linear(
@@ -315,7 +317,21 @@ def run_transformer_block(
         Float[Tensor, "batch sequence_length d_model"] Tensor with the output of
         running the Transformer block on the input features while using RoPE.
     """
-    raise NotImplementedError
+
+    transformer_block = TransformerBlock(d_model, num_heads, d_ff, max_seq_len, theta)
+
+    with torch.no_grad():
+        transformer_block.attention.k_proj.weight.copy_(weights["attn.k_proj.weight"])
+        transformer_block.attention.q_proj.weight.copy_(weights["attn.q_proj.weight"])
+        transformer_block.attention.v_proj.weight.copy_(weights["attn.v_proj.weight"])
+        transformer_block.attention.output_proj.weight.copy_(weights["attn.output_proj.weight"])
+        transformer_block.norm1.weight.copy_(weights["ln1.weight"])
+        transformer_block.norm2.weight.copy_(weights["ln2.weight"])
+        transformer_block.feed_forward_nn.w1.weight.copy_(weights["ffn.w1.weight"])
+        transformer_block.feed_forward_nn.w2.weight.copy_(weights["ffn.w2.weight"])
+        transformer_block.feed_forward_nn.w3.weight.copy_(weights["ffn.w3.weight"])
+
+    return transformer_block(in_features)
 
 
 def run_transformer_lm(
@@ -397,7 +413,26 @@ def run_transformer_lm(
         Float[Tensor, "batch_size sequence_length vocab_size"]: Tensor with the predicted unnormalized
         next-word distribution for each token.
     """
-    raise NotImplementedError
+    transformer_lm = TransformerLM(vocab_size, context_length, d_model, num_layers, num_heads, d_ff, rope_theta)
+
+    with torch.no_grad():
+        transformer_lm.token_embeddings.weight.copy_(weights["token_embeddings.weight"])
+        transformer_lm.final_norm.weight.copy_(weights["ln_final.weight"])
+        transformer_lm.output_projection.weight.copy_(weights["lm_head.weight"])
+
+        for i in range(num_layers):
+            transformer_block = transformer_lm.layers[i]
+            transformer_block.attention.q_proj.weight.copy_(weights[f"layers.{i}.attn.q_proj.weight"])
+            transformer_block.attention.k_proj.weight.copy_(weights[f"layers.{i}.attn.k_proj.weight"])
+            transformer_block.attention.v_proj.weight.copy_(weights[f"layers.{i}.attn.v_proj.weight"])
+            transformer_block.attention.output_proj.weight.copy_(weights[f"layers.{i}.attn.output_proj.weight"])
+            transformer_block.norm1.weight.copy_(weights[f"layers.{i}.ln1.weight"])
+            transformer_block.norm2.weight.copy_(weights[f"layers.{i}.ln2.weight"])
+            transformer_block.feed_forward_nn.w1.weight.copy_(weights[f"layers.{i}.ffn.w1.weight"])
+            transformer_block.feed_forward_nn.w2.weight.copy_(weights[f"layers.{i}.ffn.w2.weight"])
+            transformer_block.feed_forward_nn.w3.weight.copy_(weights[f"layers.{i}.ffn.w3.weight"])
+
+    return transformer_lm(in_indices)
 
 
 def run_rmsnorm(
