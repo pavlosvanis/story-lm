@@ -11,6 +11,7 @@ from torch import Tensor
 
 from student.bpe_training import train_bpe
 from student.tokenizer import Tokenizer
+
 from student.linear import Linear
 from student.embedding import Embedding
 from student.rmsnorm import RMSNorm
@@ -21,6 +22,9 @@ from student.scaled_dot_product_attention import scaled_dot_product_attention
 from student.multi_head_self_attention import CausalMultiheadSelfAttention
 from student.transformer_block import TransformerBlock
 from student.transformer_lm import TransformerLM
+
+from student.cross_entropy import cross_entropy
+from student.adamw import AdamW
 
 
 def run_linear(
@@ -531,7 +535,7 @@ def run_cross_entropy(
     Returns:
         Float[Tensor, ""]: The average cross-entropy loss across examples.
     """
-    raise NotImplementedError
+    return cross_entropy(inputs, targets)
 
 
 def run_gradient_clipping(parameters: Iterable[torch.nn.Parameter], max_l2_norm: float) -> None:
@@ -550,7 +554,7 @@ def get_adamw_cls() -> Any:
     """
     Returns a torch.optim.Optimizer that implements AdamW.
     """
-    raise NotImplementedError
+    return AdamW
 
 
 def run_get_lr_cosine_schedule(
