@@ -11,6 +11,23 @@ def load_data(dataset: npt.NDArray, batch_size: int, context_length: int,  devic
     Int[Tensor, "batch_size context_length"],
     Int[Tensor, "batch_size context_length"],
 ]:
+    """Sample a batch of next-token prediction sequences.
+
+    Each input sequence is a contiguous window from the tokenized dataset.
+    The corresponding target sequence is the same window shifted forward by
+    one token.
+
+    Args:
+        dataset: One-dimensional sequence of token IDs.
+        batch_size: Number of sequences to sample.
+        context_length: Number of input tokens in each sequence.
+        device: Device on which the returned tensors are placed.
+
+    Returns:
+        A pair containing input and target token tensors, each with shape
+        (batch_size, context_length).
+    """
+
     inputs = torch.empty(batch_size, context_length, device=device, dtype=torch.long)
     targets = torch.empty(batch_size, context_length, device=device, dtype=torch.long)
 

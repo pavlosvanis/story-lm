@@ -7,6 +7,18 @@ def gradient_clipping(
     parameters: Iterable[torch.nn.Parameter],
     max_l2_norm: float, eps: float = 1e-6
 ) -> None:
+    """Clip gradients using their global L2 norm.
+
+        Computes the L2 norm across all parameter gradients and, if it exceeds
+        `max_l2_norm`, scales every gradient by the same factor so that the
+        resulting global norm is bounded by the threshold.
+
+        Args:
+            parameters: Model parameters whose gradients should be clipped.
+            max_l2_norm: Maximum allowed global gradient norm.
+            eps: Small constant used for numerical stability.
+    """
+
     parameters = list(parameters)
 
     global_l2_norm = 0

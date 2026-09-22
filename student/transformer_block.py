@@ -11,6 +11,12 @@ from student.positionwise_feedforward import SwiGLU
 
 
 class TransformerBlock(nn.Module):
+    """Pre-norm Transformer block with causal self-attention and SwiGLU.
+
+    Applies RMS normalization before both the attention and feed-forward
+    sublayers, with a residual connection around each sublayer.
+    """
+
     def __init__(self, d_model: int, num_heads: int, d_ff: int, max_seq_len: int, theta: float, device: torch.device | None = None, dtype: torch.dtype | None = None):
         super().__init__()
 
@@ -25,6 +31,15 @@ class TransformerBlock(nn.Module):
             self,
             x: Float[Tensor, "... sequence_length d_model"],
     ) -> Float[Tensor, "... sequence_length d_model"]:
+        """Apply the Transformer block to a sequence of hidden representations.
+
+        Args:
+            x: Input hidden representations.
+
+        Returns:
+            Hidden representations with the same shape as the input.
+        """
+
         y = x + self.attention(self.norm1(x))
 
         return y + self.feed_forward_nn(self.norm2(y))

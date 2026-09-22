@@ -10,6 +10,15 @@ from student.scaled_dot_product_attention import scaled_dot_product_attention
 
 
 class CausalMultiheadSelfAttention(nn.Module):
+    """Causal multi-head self-attention with optional rotary embeddings.
+
+    Projects the input into query, key, and value representations, splits
+    them across attention heads, optionally applies rotary positional
+    embeddings to queries and keys, performs causal scaled dot-product
+    attention, and projects the concatenated head outputs back to the model
+    dimension.
+    """
+
     def __init__(self, d_model: int, num_heads: int, rope: RotaryPositionalEmbedding | None = None, device: torch.device | None = None, dtype: torch.dtype | None = None):
         super().__init__()
         assert (d_model % num_heads == 0)
@@ -28,6 +37,17 @@ class CausalMultiheadSelfAttention(nn.Module):
             X: Float[Tensor, "... sequence_length d_model"],
             token_positions: Int[Tensor, " ... sequence_length"] | None = None
     ) -> Float[Tensor, "... sequence_length d_model"]:
+        """Apply causal multi-head self-attention.
+
+        Args:
+            X: Input hidden representations.
+            token_positions: Optional token positions used by rotary positional
+                embeddings. If omitted, positions start from zero.
+
+        Returns:
+            Attention output with the same shape as the input.
+        """
+
         Q = self.q_proj(X)
         K = self.k_proj(X)
         V = self.v_proj(X)

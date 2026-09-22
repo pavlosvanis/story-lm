@@ -58,6 +58,49 @@ def train_model(
         checkpoint_interval: int = 1000,
         checkpoint_path: str | None = None,
 ) -> tuple[TransformerLM, list[float], list[float], list[int]]:
+    """Train a Transformer language model and periodically evaluate it.
+
+     Loads tokenized training and validation datasets using memory mapping,
+     trains the model with AdamW, applies gradient clipping and a learning-rate
+     schedule, periodically evaluates validation loss, and optionally saves
+     checkpoints.
+
+     Args:
+         vocab_size: Number of tokens in the vocabulary.
+         training_tokens_path: Path to the tokenized training dataset.
+         validation_tokens_path: Path to the tokenized validation dataset.
+         num_iterations: Number of optimization steps to perform.
+         batch_size: Number of token sequences per training batch.
+         context_length: Number of tokens in each input sequence.
+         d_model: Dimensionality of the model representations.
+         num_layers: Number of Transformer blocks.
+         num_heads: Number of attention heads.
+         d_ff: Hidden dimensionality of the feed-forward network.
+         theta: Base value used for rotary positional embeddings.
+         betas: Exponential decay rates for AdamW moment estimates.
+         eps: Numerical stability constant used by AdamW.
+         weight_decay: AdamW decoupled weight-decay coefficient.
+         max_l2_norm: Maximum allowed global gradient norm.
+         max_learning_rate: Maximum learning rate used by the schedule.
+         min_learning_rate: Minimum learning rate used by the schedule.
+         warmup_iters: Number of learning-rate warmup steps.
+         cosine_cycle_iters: Number of steps in the cosine schedule.
+         device: Device on which training is performed.
+         dtype: Floating-point dtype used for model parameters.
+         eval_interval: Number of training steps between evaluations.
+         num_eval_batches: Number of validation batches averaged per evaluation.
+         checkpoint_interval: Number of training steps between checkpoints.
+         checkpoint_path: Path at which checkpoints are saved, if provided.
+
+     Returns:
+         A tuple containing the trained model, average training losses,
+         average validation losses, and the training steps at which evaluation
+         was performed.
+
+     Raises:
+         ValueError: If the training configuration or dataset shape is invalid.
+     """
+
     _validate_training_config(vocab_size, num_iterations, batch_size, context_length, d_model, num_layers, num_heads,
                               d_ff, theta, max_l2_norm, max_learning_rate, min_learning_rate, warmup_iters,
                               cosine_cycle_iters, eval_interval, num_eval_batches, checkpoint_interval)
@@ -154,6 +197,12 @@ def _validate_training_config(
         num_eval_batches: int,
         checkpoint_interval: int
 ) -> None:
+    """Validate model and training hyperparameters.
+
+    Raises:
+        ValueError: If any configuration value is invalid.
+    """
+
     # training arguments
     if vocab_size <= 0:
         raise ValueError("vocab_size must be positive")
@@ -222,6 +271,17 @@ def _validate_dataset(
         tokens: np.ndarray,
         context_length: int,
         dataset_name: str) -> None:
+    """Validate the structure and length of a tokenized dataset.
+
+    Args:
+        tokens: One-dimensional sequence of token IDs.
+        context_length: Number of tokens required for each model input.
+        dataset_name: Name used to identify the dataset in error messages.
+
+    Raises:
+        ValueError: If the dataset is not one-dimensional or is too short.
+    """
+
     if tokens.ndim != 1:
         raise ValueError(f"{dataset_name} dataset must be a 1D sequence of token IDs")
 
@@ -231,6 +291,23 @@ def _validate_dataset(
 
 def _evaluate(model: TransformerLM, validation_tokens: np.ndarray, batch_size: int, context_length: int,
               device: torch.device | str | None, num_eval_batches: int) -> float:
+    """Estimate validation loss for the current model.
+
+    The loss is averaged across multiple randomly sampled validation batches to
+    reduce noise from any single batch.
+
+    Args:
+        model: Model to evaluate.
+        validation_tokens: Tokenized validation dataset.
+        batch_size: Number of sequences per validation batch.
+        context_length: Number of tokens in each sequence.
+        device: Device on which validation is performed.
+        num_eval_batches: Number of validation batches to average.
+
+    Returns:
+        Average validation cross-entropy loss.
+    """
+
     model.eval()
     validation_loss_sum = 0.0
 

@@ -15,6 +15,23 @@ def scaled_dot_product_attention(
         V: Float[Tensor, "... values d_v"],
         mask: Bool[Tensor, "... queries keys"] | None = None,
 ) -> Float[Tensor, "... queries d_v"]:
+    """Compute scaled dot-product attention.
+
+        Computes query-key similarity scores, scales them by the square root of
+        the key dimension, optionally applies an attention mask, and returns the
+        weighted sum of the value vectors.
+
+        Args:
+            Q: Query vectors.
+            K: Key vectors.
+            V: Value vectors.
+            mask: Optional boolean attention mask. True entries are allowed to
+                attend and False entries are masked out.
+
+        Returns:
+            Attention-weighted value vectors.
+    """
+
     attention_scores = einsum(Q, K, " ... queries d_k, ... keys d_k -> ... queries keys")
     d_k = Q.shape[-1]
     pre_softmax_attention_weights = attention_scores / math.sqrt(d_k)

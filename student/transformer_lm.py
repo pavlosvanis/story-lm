@@ -11,6 +11,14 @@ from student.linear import Linear
 
 
 class TransformerLM(nn.Module):
+    class TransformerLM(nn.Module):
+        """Decoder-only Transformer language model.
+
+        Maps token IDs to embeddings, processes them through a stack of
+        Transformer blocks, applies final RMS normalization, and projects the
+        resulting hidden representations to vocabulary logits.
+        """
+
     def __init__(
             self,
             vocab_size: int,
@@ -35,6 +43,15 @@ class TransformerLM(nn.Module):
             self,
             in_indices: Int[Tensor, "... sequence_length"],
     ) -> Float[Tensor, "... sequence_length vocab_size"]:
+        """Compute next-token logits for an input token sequence.
+
+        Args:
+            in_indices: Token IDs for the input sequence.
+
+        Returns:
+            Unnormalized logits over the vocabulary at each sequence position.
+        """
+
         x = self.token_embeddings(in_indices)
 
         for transformer_block in self.layers:

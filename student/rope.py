@@ -9,6 +9,13 @@ from jaxtyping import Float
 
 
 class RotaryPositionalEmbedding(nn.Module):
+    """Apply rotary positional embeddings to query or key vectors.
+
+    Precomputes sine and cosine values for all supported sequence positions
+    and rotates adjacent pairs of hidden dimensions according to each token's
+    position.
+    """
+
     def __init__(self, theta: float, d_k: int, max_seq_len: int, device=None):
         super().__init__()
 
@@ -34,6 +41,17 @@ class RotaryPositionalEmbedding(nn.Module):
         self.register_buffer("sin_cache", sin_cache, persistent=False)
 
     def forward(self, x: Float[Tensor, " ... seq_len d_k"], token_positions: Int[Tensor, " ... seq_len"]) -> Float[Tensor, "... seq_len d_k"]:
+        """Apply rotary position-dependent rotations to the input vectors.
+
+        Args:
+            x: Query or key vectors whose final dimension is partitioned into
+                adjacent two-dimensional pairs.
+            token_positions: Sequence positions corresponding to the tokens in `x`.
+
+        Returns:
+            Positionally rotated vectors with the same shape as `x`.
+        """
+
         # For each token in x, select the precomputed cosine and sine values
         # corresponding to its actual sequence position.
         # Shape: (..., seq_len, d_k // 2), one value per 2D pair.

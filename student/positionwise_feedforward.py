@@ -7,6 +7,11 @@ from jaxtyping import Float
 
 
 class SwiGLU(nn.Module):
+    """SwiGLU position-wise feed-forward network.
+
+        Applies a SiLU-activated projection gated elementwise by a second
+        projection, followed by a projection back to the model dimension.
+    """
     def __init__(self, d_model: int, d_ff: int, device: torch.device | None = None, dtype: torch.dtype | None = None):
         super().__init__()
         self.w1 = linear.Linear(d_model, d_ff, device=device, dtype=dtype)  # weight: (d_ff, d_model)
@@ -14,6 +19,15 @@ class SwiGLU(nn.Module):
         self.w3 = linear.Linear(d_model, d_ff, device=device, dtype=dtype)  # weight: (d_ff, d_model)
 
     def forward(self, x: Float[Tensor, " ... d_model"]) -> Float[Tensor, " ... d_model"]:
+        """Apply the SwiGLU feed-forward transformation.
+
+        Args:
+            x: Input hidden representations.
+
+        Returns:
+            Transformed representations with the same final dimension as the input.
+        """
+
         w1_x = self.w1(x)
         w3_x = self.w3(x)
         silu_w1_x = w1_x * torch.sigmoid(w1_x)

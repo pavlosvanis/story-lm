@@ -9,6 +9,8 @@ from torch import Tensor
 class Embedding(nn.Module):
     def __init__(self, num_embeddings: int, embedding_dim: int, device: torch.device | None = None,
                  dtype: torch.dtype | None = None):
+        """Learned lookup table mapping token IDs to embedding vectors."""
+
         super().__init__()
 
         self.num_embeddings = num_embeddings  # Vocabulary size
@@ -22,4 +24,13 @@ class Embedding(nn.Module):
         nn.init.trunc_normal_(self.weight, mean=0.0, std=1, a=-3, b=3)
 
     def forward(self, token_ids: Int[Tensor, " ..."]) -> Float[Tensor, " ... embedding_dim"]:
+        """Look up embedding vectors for the provided token IDs.
+
+        Args:
+            token_ids: Integer token IDs.
+
+        Returns:
+            Learned embedding vectors with an additional embedding dimension.
+        """
+
         return self.weight[token_ids]

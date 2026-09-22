@@ -6,6 +6,12 @@ from torch import Tensor
 
 
 class RMSNorm(nn.Module):
+    """Root mean square normalization over the model dimension.
+
+       Normalizes each hidden vector by its root mean square and applies a
+       learned elementwise gain.
+       """
+
     def __init__(self, d_model: int, eps: float = 1e-5, device: torch.device | None = None, dtype: torch.dtype | None = None):
         super().__init__()
         self.d_model = d_model
@@ -15,6 +21,15 @@ class RMSNorm(nn.Module):
         self.weight = nn.Parameter(gain)
 
     def forward(self, x: Float[Tensor, " ... d_model"]) -> Float[Tensor, " ... d_model"]:
+        """Normalize input vectors across their final dimension.
+
+        Args:
+            x: Input hidden representations.
+
+        Returns:
+            RMS-normalized representations in the input dtype.
+        """
+
         in_dtype = x.dtype
 
         # Upcast input to prevent overflow when squaring
@@ -28,4 +43,4 @@ class RMSNorm(nn.Module):
         rms = torch.sqrt(mean_square + self.eps)
         rms_norm = (x / rms) * self.weight
 
-        return rms_norm.to(in_dtype)  # rok lets add coeturn result in original dtype after normalizing
+        return rms_norm.to(in_dtype)  # return result in the original input dtype

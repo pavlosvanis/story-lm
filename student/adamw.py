@@ -5,6 +5,13 @@ import torch
 
 
 class AdamW(torch.optim.Optimizer):
+    """Implements the AdamW optimization algorithm.
+
+        AdamW maintains first- and second-moment estimates of each parameter's
+        gradients and applies decoupled weight decay separately from the
+        moment-based parameter update.
+    """
+
     def __init__(
             self,
             params: Iterable[torch.nn.Parameter],
@@ -13,6 +20,21 @@ class AdamW(torch.optim.Optimizer):
             eps: float = 1e-8,
             weight_decay: float = 0.0,
     ):
+        """Initialize the AdamW optimizer.
+
+                Args:
+                    params: Parameters to optimize.
+                    lr: Learning rate.
+                    betas: Exponential decay rates for the first- and second-moment
+                        estimates.
+                    eps: Small constant for numerical stability.
+                    weight_decay: Coefficient for decoupled weight decay.
+
+                Raises:
+                    ValueError: If any optimizer hyperparameter is outside its valid
+                        range.
+        """
+
         if lr < 0:
             raise ValueError(f"Invalid learning rate: {lr}")
 
@@ -38,6 +60,19 @@ class AdamW(torch.optim.Optimizer):
         super().__init__(params, defaults)
 
     def step(self, closure: Optional[Callable] = None) -> Optional[torch.Tensor]:
+        """Perform a single AdamW optimization step.
+
+                Updates each parameter with a gradient using bias-corrected first- and
+                second-moment estimates and decoupled weight decay.
+
+                Args:
+                    closure: Optional callable that reevaluates the model and returns
+                        the loss.
+
+                Returns:
+                    The loss returned by the closure, if a closure is provided;
+                    otherwise, None.
+        """
         loss = None if closure is None else closure()
 
         for group in self.param_groups:
