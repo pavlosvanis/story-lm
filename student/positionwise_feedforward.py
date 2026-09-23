@@ -6,6 +6,10 @@ from torch import Tensor
 from jaxtyping import Float
 
 
+def silu(x: torch.Tensor) -> torch.Tensor:
+    """Apply the SiLU activation elementwise."""
+    return x * torch.sigmoid(x)
+
 class SwiGLU(nn.Module):
     """SwiGLU position-wise feed-forward network.
 
@@ -30,7 +34,7 @@ class SwiGLU(nn.Module):
 
         w1_x = self.w1(x)
         w3_x = self.w3(x)
-        silu_w1_x = w1_x * torch.sigmoid(w1_x)
+        silu_w1_x = silu(w1_x)
         # Gate the SiLU-activated w1 branch elementwise with the w3 branch
         swiglu = self.w2(silu_w1_x * w3_x)
 

@@ -15,7 +15,7 @@ from student.tokenizer import Tokenizer
 from student.linear import Linear
 from student.embedding import Embedding
 from student.rmsnorm import RMSNorm
-from student.positionwise_feedforward import SwiGLU
+from student.positionwise_feedforward import SwiGLU, silu
 from student.rope import RotaryPositionalEmbedding
 from student.softmax import softmax
 from student.scaled_dot_product_attention import scaled_dot_product_attention
@@ -483,7 +483,7 @@ def run_silu(in_features: Float[Tensor, " ..."]) -> Float[Tensor, " ..."]:
         Float[Tensor,"..."]: of with the same shape as `in_features` with the output of applying
         SiLU to each element.
     """
-    raise NotImplementedError
+    return silu(in_features)
 
 
 def run_get_batch(
