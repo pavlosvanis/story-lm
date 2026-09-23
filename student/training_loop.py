@@ -1,14 +1,10 @@
+import time
 import numpy as np
 import torch
-
 from data_loading import load_data
-
 from transformer_lm import TransformerLM
-
 from cross_entropy import cross_entropy
-
 from adamw import AdamW
-
 from checkpointing import save_checkpoint
 from gradient_clipping import gradient_clipping
 from learning_rate_schedule import learning_rate_schedule
@@ -57,7 +53,7 @@ def train_model(
         # checkpoints
         checkpoint_interval: int = 1000,
         checkpoint_path: str | None = None,
-) -> tuple[TransformerLM, list[float], list[float], list[int]]:
+) -> tuple[TransformerLM, list[float], list[float], list[int], list[float]]:
     """Train a Transformer language model and periodically evaluate it.
 
      Loads tokenized training and validation datasets using memory mapping,
@@ -94,8 +90,8 @@ def train_model(
 
      Returns:
          A tuple containing the trained model, average training losses,
-         average validation losses, and the training steps at which evaluation
-         was performed.
+         average validation losses, the training steps at which evaluation
+         was performed, and the corresponding elapsed wall-clock times.
 
      Raises:
          ValueError: If the training configuration or dataset shape is invalid.
@@ -126,8 +122,11 @@ def train_model(
     avg_training_losses = []
     avg_validation_losses = []
     eval_steps = []
+    eval_times = []
 
     running_train_loss = 0.0
+
+    start_time = time.perf_counter()
     for i in range(num_iterations):
         # inputs and targets each have shape (batch_size, context_length)
         inputs, targets = load_data(training_tokens, batch_size, context_length, device)
@@ -161,13 +160,16 @@ def train_model(
             avg_training_losses.append(avg_training_loss)
 
             eval_steps.append(i + 1)
+            elapsed_time = time.perf_counter() - start_time
+            eval_times.append(elapsed_time)
             running_train_loss = 0.0  # reset training-loss accumulator for the next evaluation interval
 
             print(
                 f"step {i + 1}: "
                 f"avg train loss over last {eval_interval} steps={avg_training_loss:.4f}, "
                 f"avg validation loss over {num_eval_batches} batches={avg_validation_loss:.4f}, "
-                f"lr={lr:.6g}"
+                f"lr={lr:.6g}, "
+                f"time={elapsed_time:.1f}s"
             )
 
         # Checkpointing
@@ -175,7 +177,11 @@ def train_model(
             if checkpoint_path:
                 save_checkpoint(model, optimizer, i + 1, checkpoint_path)
 
-    return model, avg_training_losses, avg_validation_losses, eval_steps
+    # Save final checkpoint of model
+    if checkpoint_path:
+        save_checkpoint(model, optimizer, num_iterations, checkpoint_path)
+
+    return model, avg_training_losses, avg_validation_losses, eval_steps, eval_times
 
 
 def _validate_training_config(
