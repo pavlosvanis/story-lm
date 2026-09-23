@@ -49,21 +49,14 @@ def decode(
     if prompt_length == 0:
         raise ValueError("prompt must encode to at least one token")
 
-    if prompt_length > model.context_length:
-        raise ValueError(
-            f"prompt length ({prompt_length}) exceeds model context length "
-            f"({model.context_length})"
-        )
-
-    generated_sequence = torch.tensor(prompt_token_ids, device=device, dtype=torch.long).unsqueeze(0)  # (prompt_length,) -> (1, prompt_length)
+    generated_sequence = torch.tensor(prompt_token_ids, device=device, dtype=torch.long).unsqueeze(
+        0)  # (prompt_length,) -> (1, prompt_length)
     model.eval()
 
     with torch.no_grad():
         for _ in range(max_new_tokens):
-            if generated_sequence.shape[1] >= model.context_length:
-                break
-
-            logits = model(generated_sequence).squeeze(0)  # shape is (sequence_length, vocab_size)
+            model_input = generated_sequence[:, -model.context_length:]  # only keep last context_length tokens
+            logits = model(model_input).squeeze(0)  # shape is (sequence_length, vocab_size)
             next_token_logits = logits[-1]  # logits for predicting the next token
 
             # apply temperature scaling and convert logits to probabilities
@@ -139,4 +132,3 @@ def _validate_inputs(max_new_tokens: int, temperature: float, top_p: float) -> N
 
     if not 0 < top_p <= 1:
         raise ValueError("top_p must be in the interval (0, 1]")
-
