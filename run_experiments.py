@@ -1,18 +1,41 @@
 from pathlib import Path
-
+import random
+import numpy as np
 import torch
 
 from student import training_loop
-from experiment_utils import save_experiment_results
+from student.experiment_utils import save_experiment_results
 
-if __name__ == "__main__":
-    experiment_name = "lr_1e-3"
+PROJECT_ROOT = Path(__file__).resolve().parent
 
-    experiment_dir = Path("experiments") / experiment_name
+def run_experiment(max_learning_rate: float) -> None:
+    seed = 42  # same initialization and batch sequence across experiments
+
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+
+    experiment_name = f"lr_{max_learning_rate:.0e}"
+
+    experiment_dir = PROJECT_ROOT / "experiments" / experiment_name
     experiment_dir.mkdir(parents=True, exist_ok=True)
 
-    training_tokens_path = "..."
-    validation_tokens_path = "..."
+    training_tokens_path = PROJECT_ROOT / "artifacts" / "tinystories_train_tokens.npy"
+    validation_tokens_path = PROJECT_ROOT / "artifacts" / "tinystories_valid_tokens.npy"
+
+    if not training_tokens_path.exists():
+        raise FileNotFoundError(
+            f"Training tokens not found: {training_tokens_path}"
+        )
+
+    if not validation_tokens_path.exists():
+        raise FileNotFoundError(
+            f"Validation tokens not found: {validation_tokens_path}"
+        )
+
+    print(f"Training data:   {training_tokens_path}")
+    print(f"Validation data: {validation_tokens_path}")
+    print(f"Results dir:     {experiment_dir}")
 
     # Training
     num_iterations = 5000
@@ -28,24 +51,24 @@ if __name__ == "__main__":
     theta = 10_000
 
     # AdamW
-    betas = (0.9, 0.999)
+    betas = (0.9, 0.95)
     eps = 1e-8
-    weight_decay = 0.0
+    weight_decay = 0.1
 
     # Gradient clipping
     max_l2_norm = 1.0
 
-    # Learning-rate schedule
-    max_learning_rate = 1e-3
+    # Learning-rate schedule -> VARY LR for experiment
+    max_learning_rate = max_learning_rate
 
     # We will choose/tune these before the real experiment.
-    min_learning_rate = ...
-    warmup_iters = ...
-    cosine_cycle_iters = num_iterations
+    min_learning_rate = 0.1 * max_learning_rate
+    warmup_iters = int(0.02 * num_iterations)  # 100 steps
+    cosine_cycle_iters = num_iterations - 1
 
     # Validation
-    eval_interval = ...
-    num_eval_batches = ...
+    eval_interval = 100
+    num_eval_batches = 10
 
     # Checkpointing
     checkpoint_interval = 1000
@@ -58,8 +81,8 @@ if __name__ == "__main__":
     model, train_losses, validation_losses, eval_steps, eval_times = (
         training_loop.train_model(
             vocab_size=vocab_size,
-            training_tokens_path=training_tokens_path,
-            validation_tokens_path=validation_tokens_path,
+            training_tokens_path=str(training_tokens_path),
+            validation_tokens_path=str(validation_tokens_path),
             num_iterations=num_iterations,
             batch_size=batch_size,
             context_length=context_length,
@@ -88,8 +111,8 @@ if __name__ == "__main__":
     config = {
         "experiment_name": experiment_name,
 
-        "training_tokens_path": training_tokens_path,
-        "validation_tokens_path": validation_tokens_path,
+        "training_tokens_path": str(training_tokens_path),
+        "validation_tokens_path": str(validation_tokens_path),
 
         "vocab_size": vocab_size,
         "num_iterations": num_iterations,
@@ -119,6 +142,8 @@ if __name__ == "__main__":
 
         "device": str(device),
         "dtype": str(dtype),
+
+        "seed": seed
     }
 
     save_experiment_results(
@@ -130,3 +155,23 @@ if __name__ == "__main__":
         eval_times,
     )
 
+    del model
+    torch.mps.empty_cache()
+
+
+if __name__ == "__main__":
+    # LR sweep: keep architecture, data, seed, optimizer settings, and schedule shape fixed across runs.
+    # Use beta2=0.95 and a 2% warmup as fixed baseline settings because of training run being short (5000 steps)
+    # Test approximately log-spaced learning rates, with 3e-3 as an aggressive value to probe instability/divergence.
+    learning_rates = [1e-4, 3e-4, 6e-4, 1e-3, 3e-3]
+
+    for learning_rate in learning_rates:
+        print(f"\nStarting LR experiment: {learning_rate}\n")
+
+        try:
+            run_experiment(learning_rate)
+        except Exception as e:
+            print(f"Experiment with LR {learning_rate} failed: {e}")
+            print("Moving to the next learning rate...")
+        finally:
+            torch.mps.empty_cache()

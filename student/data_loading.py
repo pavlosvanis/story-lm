@@ -33,8 +33,11 @@ def load_data(dataset: npt.NDArray, batch_size: int, context_length: int,  devic
 
     for b in range(batch_size):
         seq_start = random.randint(0, len(dataset) - context_length - 1)
-        inputs[b] = torch.from_numpy(dataset[seq_start: seq_start + context_length]).to(device, dtype=torch.long)
-        targets[b] = torch.from_numpy(dataset[seq_start + 1: seq_start + context_length + 1]).to(device, dtype=torch.long)
+        input_slice = dataset[seq_start: seq_start + context_length].copy()
+        target_slice = dataset[seq_start + 1: seq_start + context_length + 1].copy()
+
+        inputs[b] = torch.from_numpy(input_slice).to(device, dtype=torch.long)
+        targets[b] = torch.from_numpy(target_slice).to(device, dtype=torch.long)
 
     return inputs, targets
 

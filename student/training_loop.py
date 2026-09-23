@@ -1,13 +1,13 @@
 import time
 import numpy as np
 import torch
-from data_loading import load_data
-from transformer_lm import TransformerLM
-from cross_entropy import cross_entropy
-from adamw import AdamW
-from checkpointing import save_checkpoint
-from gradient_clipping import gradient_clipping
-from learning_rate_schedule import learning_rate_schedule
+from .data_loading import load_data
+from .transformer_lm import TransformerLM
+from .cross_entropy import cross_entropy
+from .adamw import AdamW
+from .checkpointing import save_checkpoint
+from .gradient_clipping import gradient_clipping
+from .learning_rate_schedule import learning_rate_schedule
 
 
 def train_model(
