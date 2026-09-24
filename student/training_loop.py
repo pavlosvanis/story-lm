@@ -49,6 +49,7 @@ def train_model(
         # validation
         eval_interval: int = 100,
         num_eval_batches: int = 10,
+        eval_batch_size: int | None = None,
 
         # checkpoints
         checkpoint_interval: int = 1000,
@@ -85,6 +86,7 @@ def train_model(
          dtype: Floating-point dtype used for model parameters.
          eval_interval: Number of training steps between evaluations.
          num_eval_batches: Number of validation batches averaged per evaluation.
+         eval_batch_size: Number of sequences per validation batch.
          checkpoint_interval: Number of training steps between checkpoints.
          checkpoint_path: Path at which checkpoints are saved, if provided.
 
@@ -126,6 +128,9 @@ def train_model(
 
     running_train_loss = 0.0
 
+    if eval_batch_size is None:
+        eval_batch_size = batch_size
+
     start_time = time.perf_counter()
     for i in range(num_iterations):
         # inputs and targets each have shape (batch_size, context_length)
@@ -150,7 +155,7 @@ def train_model(
 
         # Validation
         if (i + 1) % eval_interval == 0:  # every eval_interval training steps
-            avg_validation_loss = _evaluate(model, validation_tokens, batch_size, context_length, device,
+            avg_validation_loss = _evaluate(model, validation_tokens, eval_batch_size, context_length, device,
                                             num_eval_batches)
 
             avg_validation_losses.append(avg_validation_loss)

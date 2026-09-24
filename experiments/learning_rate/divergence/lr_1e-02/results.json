@@ -1,0 +1,66 @@
+{
+  "config": {
+    "experiment_name": "lr_1e-02",
+    "experiment_type": "learning_rate_divergence_probe",
+    "training_tokens_path": "/Users/pavlosvanis/Documents/Programming/cs599-fall26-hw1/artifacts/tinystories_train_tokens.npy",
+    "validation_tokens_path": "/Users/pavlosvanis/Documents/Programming/cs599-fall26-hw1/artifacts/tinystories_valid_tokens.npy",
+    "vocab_size": 10000,
+    "num_iterations": 500,
+    "batch_size": 32,
+    "context_length": 256,
+    "d_model": 512,
+    "num_layers": 4,
+    "num_heads": 16,
+    "d_ff": 1344,
+    "theta": 10000,
+    "betas": [
+      0.9,
+      0.95
+    ],
+    "eps": 1e-08,
+    "weight_decay": 0.1,
+    "max_l2_norm": 1.0,
+    "max_learning_rate": 0.01,
+    "min_learning_rate": 0.001,
+    "warmup_iters": 100,
+    "cosine_cycle_iters": 4999,
+    "eval_interval": 100,
+    "num_eval_batches": 10,
+    "checkpoint_interval": 1000,
+    "device": "mps",
+    "dtype": "torch.float32",
+    "seed": 42
+  },
+  "history": [
+    {
+      "step": 100,
+      "training_loss": 4.551207358837128,
+      "validation_loss": 3.702686977386475,
+      "elapsed_seconds": 57.32350516700535
+    },
+    {
+      "step": 200,
+      "training_loss": 3.4534958243370055,
+      "validation_loss": 3.38844633102417,
+      "elapsed_seconds": 113.28466879201005
+    },
+    {
+      "step": 300,
+      "training_loss": 3.3122099113464354,
+      "validation_loss": 3.2928845643997193,
+      "elapsed_seconds": 169.08988912502537
+    },
+    {
+      "step": 400,
+      "training_loss": 3.262677025794983,
+      "validation_loss": 3.1961016416549684,
+      "elapsed_seconds": 225.00873012500233
+    },
+    {
+      "step": 500,
+      "training_loss": 3.1849328756332396,
+      "validation_loss": 3.1668784856796264,
+      "elapsed_seconds": 281.6036235000065
+    }
+  ]
+}

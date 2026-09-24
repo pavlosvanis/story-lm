@@ -7,7 +7,7 @@ import numpy as np
 from student import tokenizer
 
 tok = (tokenizer.Tokenizer.from_files(
-    "artifacts/tinystories_vocab.pkl",
+    "../artifacts/tinystories_vocab.pkl",
     "artifacts/tinystories_merges.pkl",
     ["<|endoftext|>"])
 )
@@ -16,7 +16,7 @@ tok = (tokenizer.Tokenizer.from_files(
 def measure_compression_ratio():
     rng = random.Random(67)
 
-    with open("data/TinyStoriesV2-GPT4-train.txt", "r", encoding="utf-8") as file:
+    with open("../data/TinyStoriesV2-GPT4-train.txt", "r", encoding="utf-8") as file:
         text = file.read()
 
     documents = text.split("<|endoftext|>")
@@ -34,7 +34,7 @@ def measure_compression_ratio():
 
 
 def measure_throughput():
-    with open("data/TinyStoriesV2-GPT4-valid.txt", "r", encoding="utf-8") as file:
+    with open("../data/TinyStoriesV2-GPT4-valid.txt", "r", encoding="utf-8") as file:
         text = file.read()
 
     total_num_bytes = len(text.encode("utf-8"))
@@ -49,8 +49,8 @@ def measure_throughput():
 
 
 def chunked_encoding():
-    input_path = "data/TinyStoriesV2-GPT4-train.txt"
-    output_path = "artifacts/tinystories_train_tokens.npy"
+    input_path = "../data/TinyStoriesV2-GPT4-train.txt"
+    output_path = "../artifacts/tinystories_train_tokens.npy"
     chunk_size = 8 * 1024 * 1024
 
     # Encode the file incrementally using large text chunks.
