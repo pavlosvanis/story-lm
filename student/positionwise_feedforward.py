@@ -10,12 +10,14 @@ def silu(x: torch.Tensor) -> torch.Tensor:
     """Apply the SiLU activation elementwise."""
     return x * torch.sigmoid(x)
 
+
 class SwiGLU(nn.Module):
     """SwiGLU position-wise feed-forward network.
 
         Applies a SiLU-activated projection gated elementwise by a second
         projection, followed by a projection back to the model dimension.
     """
+
     def __init__(self, d_model: int, d_ff: int, device: torch.device | None = None, dtype: torch.dtype | None = None):
         super().__init__()
         self.w1 = linear.Linear(d_model, d_ff, device=device, dtype=dtype)  # weight: (d_ff, d_model)
@@ -39,3 +41,35 @@ class SwiGLU(nn.Module):
         swiglu = self.w2(silu_w1_x * w3_x)
 
         return swiglu
+
+
+class SiLUFFN(nn.Module):
+    """Position-wise feed-forward network using SiLU without gating."""
+
+    def __init__(
+            self,
+            d_model: int,
+            d_ff: int,
+            device: torch.device | None = None,
+            dtype: torch.dtype | None = None,
+    ):
+        super().__init__()
+
+        self.w1 = linear.Linear(
+            d_model,
+            d_ff,
+            device=device,
+            dtype=dtype,
+        )
+        self.w2 = linear.Linear(
+            d_ff,
+            d_model,
+            device=device,
+            dtype=dtype,
+        )
+
+    def forward(
+            self,
+            x: Float[Tensor, "... d_model"],
+    ) -> Float[Tensor, "... d_model"]:
+        return self.w2(silu(self.w1(x)))

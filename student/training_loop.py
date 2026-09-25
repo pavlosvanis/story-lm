@@ -54,6 +54,13 @@ def train_model(
         # checkpoints
         checkpoint_interval: int = 1000,
         checkpoint_path: str | None = None,
+
+        # architecture ablations
+        use_rmsnorm: bool = True,
+        norm_style: str = "pre",
+        use_rope: bool = True,
+        ffn_type: str = "swiglu",
+
 ) -> tuple[TransformerLM, list[float], list[float], list[int], list[float]]:
     """Train a Transformer language model and periodically evaluate it.
 
@@ -89,6 +96,10 @@ def train_model(
          eval_batch_size: Number of sequences per validation batch.
          checkpoint_interval: Number of training steps between checkpoints.
          checkpoint_path: Path at which checkpoints are saved, if provided.
+         use_rmsnorm: Whether to use RMS normalization.
+         norm_style: Normalization placement, either "pre" or "post".
+         use_rope: Whether to use rotary positional embeddings.
+         ffn_type: Feed-forward architecture, either "swiglu" or "silu".
 
      Returns:
          A tuple containing the trained model, average training losses,
@@ -99,9 +110,12 @@ def train_model(
          ValueError: If the training configuration or dataset shape is invalid.
      """
 
+    if eval_batch_size is None:
+        eval_batch_size = batch_size
+
     _validate_training_config(vocab_size, num_iterations, batch_size, context_length, d_model, num_layers, num_heads,
                               d_ff, theta, max_l2_norm, max_learning_rate, min_learning_rate, warmup_iters,
-                              cosine_cycle_iters, eval_interval, num_eval_batches, checkpoint_interval)
+                              cosine_cycle_iters, eval_interval, eval_batch_size, num_eval_batches, checkpoint_interval)
 
     training_tokens = np.load(training_tokens_path, mmap_mode="r")
     validation_tokens = np.load(validation_tokens_path, mmap_mode="r")
@@ -118,7 +132,22 @@ def train_model(
         "validation"
     )
 
-    model = TransformerLM(vocab_size, context_length, d_model, num_layers, num_heads, d_ff, theta, device, dtype)
+    model = TransformerLM(
+        vocab_size=vocab_size,
+        context_length=context_length,
+        d_model=d_model,
+        num_layers=num_layers,
+        num_heads=num_heads,
+        d_ff=d_ff,
+        theta=theta,
+        device=device,
+        dtype=dtype,
+        use_rmsnorm=use_rmsnorm,
+        norm_style=norm_style,
+        use_rope=use_rope,
+        ffn_type=ffn_type,
+    )
+
     optimizer = AdamW(model.parameters(), max_learning_rate, betas, eps, weight_decay)
 
     avg_training_losses = []
@@ -127,9 +156,6 @@ def train_model(
     eval_times = []
 
     running_train_loss = 0.0
-
-    if eval_batch_size is None:
-        eval_batch_size = batch_size
 
     start_time = time.perf_counter()
     for i in range(num_iterations):
@@ -205,6 +231,7 @@ def _validate_training_config(
         warmup_iters: int,
         cosine_cycle_iters: int,
         eval_interval: int,
+        eval_batch_size: int,
         num_eval_batches: int,
         checkpoint_interval: int
 ) -> None:
@@ -273,6 +300,9 @@ def _validate_training_config(
 
     if num_eval_batches <= 0:
         raise ValueError("num_eval_batches must be positive")
+
+    if eval_batch_size <= 0:
+        raise ValueError("eval_batch_size must be positive")
 
     if checkpoint_interval <= 0:
         raise ValueError("checkpoint_interval must be positive")

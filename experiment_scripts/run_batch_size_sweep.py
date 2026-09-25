@@ -32,7 +32,7 @@ from student import training_loop
 from student.experiment_utils import save_experiment_results
 
 
-BATCH_SIZES = [64, 16, 112, 1]
+BATCH_SIZES = [1, 16, 64, 112]
 
 
 def run_batch_size_experiment(batch_size: int) -> None:
@@ -218,7 +218,7 @@ def run_batch_size_sweep() -> None:
                 print(
                     f"Batch size {batch_size} exceeded device memory."
                 )
-                break
+                continue
 
             raise
 

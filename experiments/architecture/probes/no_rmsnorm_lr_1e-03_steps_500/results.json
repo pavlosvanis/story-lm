@@ -1,0 +1,103 @@
+{
+  "config": {
+    "experiment_name": "no_rmsnorm",
+    "experiment_type": "architecture_ablation",
+    "is_full_run": false,
+    "training_tokens_path": "/Users/pavlosvanis/Documents/Programming/cs599-fall26-hw1/artifacts/tinystories_train_tokens.npy",
+    "validation_tokens_path": "/Users/pavlosvanis/Documents/Programming/cs599-fall26-hw1/artifacts/tinystories_valid_tokens.npy",
+    "vocab_size": 10000,
+    "num_iterations": 500,
+    "batch_size": 32,
+    "eval_batch_size": 32,
+    "total_training_tokens": 4096000,
+    "context_length": 256,
+    "d_model": 512,
+    "num_layers": 4,
+    "num_heads": 16,
+    "d_ff": 1344,
+    "theta": 10000,
+    "betas": [
+      0.9,
+      0.95
+    ],
+    "eps": 1e-08,
+    "weight_decay": 0.1,
+    "max_l2_norm": 1.0,
+    "max_learning_rate": 0.001,
+    "min_learning_rate": 0.0001,
+    "warmup_iters": 100,
+    "cosine_cycle_iters": 4999,
+    "eval_interval": 50,
+    "num_eval_batches": 10,
+    "checkpoint_interval": 500,
+    "use_rmsnorm": false,
+    "norm_style": "pre",
+    "use_rope": true,
+    "ffn_type": "swiglu",
+    "device": "mps",
+    "dtype": "torch.float32",
+    "seed": 42
+  },
+  "history": [
+    {
+      "step": 50,
+      "training_loss": 9.012377529144286,
+      "validation_loss": 4.84437141418457,
+      "elapsed_seconds": 28.176849583999683
+    },
+    {
+      "step": 100,
+      "training_loss": 4.183112201690673,
+      "validation_loss": 3.651601505279541,
+      "elapsed_seconds": 55.855111208999915
+    },
+    {
+      "step": 150,
+      "training_loss": 3.4496825981140136,
+      "validation_loss": 3.253622531890869,
+      "elapsed_seconds": 83.33669520899912
+    },
+    {
+      "step": 200,
+      "training_loss": 3.125624098777771,
+      "validation_loss": 3.006867694854736,
+      "elapsed_seconds": 110.45109291699919
+    },
+    {
+      "step": 250,
+      "training_loss": 2.9332541608810425,
+      "validation_loss": 2.8727447748184205,
+      "elapsed_seconds": 137.98811041699992
+    },
+    {
+      "step": 300,
+      "training_loss": 15.77186616420746,
+      "validation_loss": 2.7714842796325683,
+      "elapsed_seconds": 165.21457495899995
+    },
+    {
+      "step": 350,
+      "training_loss": 2.8184911823272705,
+      "validation_loss": 2.742735743522644,
+      "elapsed_seconds": 192.0613814169992
+    },
+    {
+      "step": 400,
+      "training_loss": 2.7332046222686768,
+      "validation_loss": 2.623992681503296,
+      "elapsed_seconds": 219.11860754199915
+    },
+    {
+      "step": 450,
+      "training_loss": 3.469728708267212,
+      "validation_loss": 2.6147223234176638,
+      "elapsed_seconds": 246.0978957919997
+    },
+    {
+      "step": 500,
+      "training_loss": 2.5874313926696777,
+      "validation_loss": 2.5483550786972047,
+      "elapsed_seconds": 273.3531244169999
+    }
+  ]
+}

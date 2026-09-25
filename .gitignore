@@ -1,0 +1,24 @@
+# Virtual environments
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Testing / tooling
+.pytest_cache/
+.idea/
+
+# macOS
+.DS_Store
+
+# Training checkpoints
+experiments/**/checkpoint.pt
+
+# Logs
+*.log
+
+# Large tokenized datasets
+artifacts/tinystories_train_tokens.npy
+artifacts/tinystories_valid_tokens.npy
