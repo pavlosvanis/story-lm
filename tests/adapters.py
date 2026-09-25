@@ -423,23 +423,7 @@ def run_transformer_lm(
         next-word distribution for each token.
     """
     transformer_lm = TransformerLM(vocab_size, context_length, d_model, num_layers, num_heads, d_ff, rope_theta)
-
-    with torch.no_grad():
-        transformer_lm.token_embeddings.weight.copy_(weights["token_embeddings.weight"])
-        transformer_lm.final_norm.weight.copy_(weights["ln_final.weight"])
-        transformer_lm.output_projection.weight.copy_(weights["lm_head.weight"])
-
-        for i in range(num_layers):
-            transformer_block = transformer_lm.layers[i]
-            transformer_block.attention.q_proj.weight.copy_(weights[f"layers.{i}.attn.q_proj.weight"])
-            transformer_block.attention.k_proj.weight.copy_(weights[f"layers.{i}.attn.k_proj.weight"])
-            transformer_block.attention.v_proj.weight.copy_(weights[f"layers.{i}.attn.v_proj.weight"])
-            transformer_block.attention.output_proj.weight.copy_(weights[f"layers.{i}.attn.output_proj.weight"])
-            transformer_block.norm1.weight.copy_(weights[f"layers.{i}.ln1.weight"])
-            transformer_block.norm2.weight.copy_(weights[f"layers.{i}.ln2.weight"])
-            transformer_block.feed_forward_nn.w1.weight.copy_(weights[f"layers.{i}.ffn.w1.weight"])
-            transformer_block.feed_forward_nn.w2.weight.copy_(weights[f"layers.{i}.ffn.w2.weight"])
-            transformer_block.feed_forward_nn.w3.weight.copy_(weights[f"layers.{i}.ffn.w3.weight"])
+    transformer_lm.load_transformer_lm_weights(weights)
 
     return transformer_lm(in_indices)
 

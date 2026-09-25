@@ -1,5 +1,4 @@
 from pathlib import Path
-import pickle
 import argparse
 import json
 import random
@@ -20,8 +19,8 @@ MODEL_DIR = ARTIFACTS_DIR / "final_model"
 WEIGHTS_PATH = MODEL_DIR / "weights.pt"
 CONFIG_PATH = MODEL_DIR / "config.json"
 
-VOCAB_PATH = ARTIFACTS_DIR / "vocab.pkl"
-MERGES_PATH = ARTIFACTS_DIR / "merges.pkl"
+VOCAB_PATH = ARTIFACTS_DIR / "tinystories_vocab.pkl"
+MERGES_PATH = ARTIFACTS_DIR / "tinystories_merges.pkl"
 
 OUTPUT_DIR = PROJECT_ROOT / "experiments" / "generation"
 
@@ -128,7 +127,7 @@ def main() -> None:
     tokenizer = load_tokenizer()
     model, model_config = load_model(device)
 
-    generated_text = decode(
+    completion = decode(
         model=model,
         tokenizer=tokenizer,
         prompt=args.prompt,
@@ -137,6 +136,8 @@ def main() -> None:
         top_p=args.top_p,
         device=device,
     )
+
+    generated_text = args.prompt + completion
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 

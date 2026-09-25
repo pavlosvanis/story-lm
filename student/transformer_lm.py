@@ -8,6 +8,7 @@ from student.embedding import Embedding
 from student.transformer_block import TransformerBlock
 from student.rmsnorm import RMSNorm
 from student.linear import Linear
+from student.identity import Identity
 
 
 class TransformerLM(nn.Module):
@@ -84,7 +85,7 @@ class TransformerLM(nn.Module):
                 dtype=dtype,
             )
         else:
-            self.final_norm = nn.Identity()
+            self.final_norm = Identity()
 
         self.output_projection = Linear(d_model, vocab_size, device=device, dtype=dtype)
 
@@ -110,3 +111,51 @@ class TransformerLM(nn.Module):
         logits = self.output_projection(x)
 
         return logits
+
+    def load_transformer_lm_weights(
+            self,
+            weights: dict[str, Tensor],
+    ) -> None:
+        """Load reference Transformer LM weights into the model."""
+
+        with torch.no_grad():
+            self.token_embeddings.weight.copy_(
+                weights["token_embeddings.weight"]
+            )
+            self.final_norm.weight.copy_(
+                weights["ln_final.weight"]
+            )
+            self.output_projection.weight.copy_(
+                weights["lm_head.weight"]
+            )
+
+            for i, transformer_block in enumerate(self.layers):
+                transformer_block.attention.q_proj.weight.copy_(
+                    weights[f"layers.{i}.attn.q_proj.weight"]
+                )
+                transformer_block.attention.k_proj.weight.copy_(
+                    weights[f"layers.{i}.attn.k_proj.weight"]
+                )
+                transformer_block.attention.v_proj.weight.copy_(
+                    weights[f"layers.{i}.attn.v_proj.weight"]
+                )
+                transformer_block.attention.output_proj.weight.copy_(
+                    weights[f"layers.{i}.attn.output_proj.weight"]
+                )
+
+                transformer_block.norm1.weight.copy_(
+                    weights[f"layers.{i}.ln1.weight"]
+                )
+                transformer_block.norm2.weight.copy_(
+                    weights[f"layers.{i}.ln2.weight"]
+                )
+
+                transformer_block.feed_forward_nn.w1.weight.copy_(
+                    weights[f"layers.{i}.ffn.w1.weight"]
+                )
+                transformer_block.feed_forward_nn.w2.weight.copy_(
+                    weights[f"layers.{i}.ffn.w2.weight"]
+                )
+                transformer_block.feed_forward_nn.w3.weight.copy_(
+                    weights[f"layers.{i}.ffn.w3.weight"]
+                )

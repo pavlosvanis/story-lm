@@ -8,6 +8,7 @@ from student.rmsnorm import RMSNorm
 from student.rope import RotaryPositionalEmbedding
 from student.multi_head_self_attention import CausalMultiheadSelfAttention
 from student.positionwise_feedforward import SwiGLU, SiLUFFN
+from student.identity import Identity
 
 
 class TransformerBlock(nn.Module):
@@ -66,8 +67,8 @@ class TransformerBlock(nn.Module):
                 dtype=dtype,
             )
         else:
-            self.norm1 = nn.Identity()
-            self.norm2 = nn.Identity()
+            self.norm1 = Identity()
+            self.norm2 = Identity()
 
         rope = None
 
