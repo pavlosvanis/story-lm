@@ -2,15 +2,9 @@
 
 import argparse
 import json
-import random
 from pathlib import Path
 
-import numpy as np
-import torch
-
-from storylm.inference.decoding import decode
-from storylm.model.transformer_lm import TransformerLM
-from storylm.tokenization.tokenizer import Tokenizer
+from storylm.inference.generator import StoryGenerator
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -18,66 +12,7 @@ ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
 MODEL_DIR = ARTIFACTS_DIR / "final_model"
 
 WEIGHTS_PATH = MODEL_DIR / "weights.pt"
-CONFIG_PATH = MODEL_DIR / "config.json"
-
-VOCAB_PATH = ARTIFACTS_DIR / "tinystories_vocab.pkl"
-MERGES_PATH = ARTIFACTS_DIR / "tinystories_merges.pkl"
-
 OUTPUT_DIR = PROJECT_ROOT / "experiments" / "generation"
-
-SPECIAL_TOKENS = ["<|endoftext|>"]
-
-
-def get_device() -> str:
-    """Select an available device for text generation."""
-    if torch.backends.mps.is_available():
-        return "mps"
-
-    if torch.cuda.is_available():
-        return "cuda"
-
-    return "cpu"
-
-
-def load_model(device: str) -> tuple[TransformerLM, dict]:
-    """Load the exported configuration and model weights on the requested device."""
-    with CONFIG_PATH.open() as f:
-        config = json.load(f)
-
-    model = TransformerLM(
-        vocab_size=config["vocab_size"],
-        context_length=config["context_length"],
-        d_model=config["d_model"],
-        num_layers=config["num_layers"],
-        num_heads=config["num_heads"],
-        d_ff=config["d_ff"],
-        theta=config["theta"],
-        use_rmsnorm=config["use_rmsnorm"],
-        norm_style=config["norm_style"],
-        use_rope=config["use_rope"],
-        ffn_type=config["ffn_type"],
-        device=device,
-        dtype=torch.float32,
-    )
-
-    weights = torch.load(
-        WEIGHTS_PATH,
-        map_location=device,
-    )
-
-    model.load_state_dict(weights)
-    model.eval()
-
-    return model, config
-
-
-def load_tokenizer() -> Tokenizer:
-    """Load the tokenizer vocabulary and merges used by the exported model."""
-    return Tokenizer.from_files(
-        str(VOCAB_PATH),
-        str(MERGES_PATH),
-        SPECIAL_TOKENS,
-    )
 
 
 def parse_args() -> argparse.Namespace:
@@ -121,29 +56,20 @@ def main() -> None:
     """Run the command-line entry point."""
     args = parse_args()
 
-    random.seed(args.seed)
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
-
-    device = get_device()
-
-    print(f"Using device: {device}")
     print(f"Loading model from: {WEIGHTS_PATH}")
 
-    tokenizer = load_tokenizer()
-    model, model_config = load_model(device)
+    generator = StoryGenerator.from_artifacts(ARTIFACTS_DIR)
+    print(f"Using device: {generator.device}")
 
-    completion = decode(
-        model=model,
-        tokenizer=tokenizer,
+    result = generator.generate(
         prompt=args.prompt,
         max_new_tokens=args.max_new_tokens,
         temperature=args.temperature,
         top_p=args.top_p,
-        device=device,
+        seed=args.seed,
     )
 
-    generated_text = args.prompt + completion
+    generated_text = result.full_text
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -158,8 +84,8 @@ def main() -> None:
         "temperature": args.temperature,
         "top_p": args.top_p,
         "seed": args.seed,
-        "device": device,
-        "model": model_config,
+        "device": generator.device,
+        "model": generator.model_config,
     }
 
     with generation_config_path.open("w") as f:
