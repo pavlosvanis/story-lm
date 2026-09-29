@@ -1,18 +1,13 @@
-from pathlib import Path
+"""Export inference weights and configuration from the selected checkpoint."""
+
 import json
+from pathlib import Path
 
 import torch
 
-
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-CHECKPOINT_PATH = (
-    PROJECT_ROOT
-    / "experiments"
-    / "batch_size"
-    / "batch_64"
-    / "checkpoint.pt"
-)
+CHECKPOINT_PATH = PROJECT_ROOT / "experiments" / "batch_size" / "batch_64" / "checkpoint.pt"
 
 OUTPUT_DIR = PROJECT_ROOT / "artifacts" / "final_model"
 WEIGHTS_PATH = OUTPUT_DIR / "weights.pt"
@@ -37,6 +32,7 @@ MODEL_CONFIG = {
 
 
 def main() -> None:
+    """Run the command-line entry point."""
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     checkpoint = torch.load(

@@ -1,15 +1,16 @@
-from pathlib import Path
+"""Generate a story continuation using the exported TinyStories model."""
+
 import argparse
 import json
 import random
+from pathlib import Path
 
 import numpy as np
 import torch
 
-from student.decoding import decode
-from student.tokenizer import Tokenizer
-from student.transformer_lm import TransformerLM
-
+from storylm.inference.decoding import decode
+from storylm.model.transformer_lm import TransformerLM
+from storylm.tokenization.tokenizer import Tokenizer
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -28,6 +29,7 @@ SPECIAL_TOKENS = ["<|endoftext|>"]
 
 
 def get_device() -> str:
+    """Select an available device for text generation."""
     if torch.backends.mps.is_available():
         return "mps"
 
@@ -38,6 +40,7 @@ def get_device() -> str:
 
 
 def load_model(device: str) -> tuple[TransformerLM, dict]:
+    """Load the exported configuration and model weights on the requested device."""
     with CONFIG_PATH.open() as f:
         config = json.load(f)
 
@@ -69,6 +72,7 @@ def load_model(device: str) -> tuple[TransformerLM, dict]:
 
 
 def load_tokenizer() -> Tokenizer:
+    """Load the tokenizer vocabulary and merges used by the exported model."""
     return Tokenizer.from_files(
         str(VOCAB_PATH),
         str(MERGES_PATH),
@@ -77,6 +81,7 @@ def load_tokenizer() -> Tokenizer:
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse command-line generation settings."""
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -113,6 +118,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    """Run the command-line entry point."""
     args = parse_args()
 
     random.seed(args.seed)

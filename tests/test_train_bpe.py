@@ -1,3 +1,5 @@
+"""BPE training correctness, special-token handling, and runtime checks."""
+
 import json
 import time
 
@@ -6,13 +8,7 @@ from .common import FIXTURES_PATH, gpt2_bytes_to_unicode
 
 
 def test_train_bpe_speed():
-    """
-    Ensure that BPE training is relatively efficient by measuring training
-    time on this small dataset and throwing an error if it takes more than 1.5 seconds.
-    This is a pretty generous upper-bound, it takes 0.38 seconds with the
-    reference implementation on my laptop. In contrast, the toy implementation
-    takes around 3 seconds.
-    """
+    """Check BPE training against the existing small-corpus runtime budget."""
     input_path = FIXTURES_PATH / "corpus.en"
     start_time = time.time()
     _, _ = run_train_bpe(
@@ -63,10 +59,7 @@ def test_train_bpe():
 
 
 def test_train_bpe_special_tokens(snapshot):
-    """
-    Ensure that the special tokens are added to the vocabulary and not
-    merged with other tokens.
-    """
+    """Ensure that the special tokens are added to the vocabulary and not merged with other tokens."""
     input_path = FIXTURES_PATH / "tinystories_sample_5M.txt"
     vocab, merges = run_train_bpe(
         input_path=input_path,

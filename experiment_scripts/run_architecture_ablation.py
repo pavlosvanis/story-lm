@@ -1,3 +1,5 @@
+"""Reproduce Transformer architecture ablations and stability probes."""
+
 import argparse
 import random
 
@@ -5,37 +7,36 @@ import numpy as np
 import torch
 
 from experiment_scripts.experiment_config import (
-    EXPERIMENTS_DIR,
-    TRAINING_TOKENS_PATH,
-    VALIDATION_TOKENS_PATH,
-    SEED,
-    NUM_ITERATIONS,
-    BATCH_SIZE,
-    VOCAB_SIZE,
-    CONTEXT_LENGTH,
-    D_MODEL,
-    NUM_LAYERS,
-    NUM_HEADS,
-    D_FF,
-    THETA,
-    BETAS,
-    EPS,
-    WEIGHT_DECAY,
-    MAX_L2_NORM,
     BASE_MAX_LEARNING_RATE,
-    MIN_LR_RATIO,
-    WARMUP_ITERS,
-    COSINE_CYCLE_ITERS,
-    EVAL_INTERVAL,
-    NUM_EVAL_BATCHES,
+    BATCH_SIZE,
+    BETAS,
     CHECKPOINT_INTERVAL,
+    CONTEXT_LENGTH,
+    COSINE_CYCLE_ITERS,
+    D_FF,
+    D_MODEL,
     DEVICE,
     DTYPE,
+    EPS,
+    EVAL_INTERVAL,
+    EXPERIMENTS_DIR,
+    MAX_L2_NORM,
+    MIN_LR_RATIO,
+    NUM_EVAL_BATCHES,
+    NUM_HEADS,
+    NUM_ITERATIONS,
+    NUM_LAYERS,
+    PROJECT_ROOT,
+    SEED,
+    THETA,
+    TRAINING_TOKENS_PATH,
+    VALIDATION_TOKENS_PATH,
+    VOCAB_SIZE,
+    WARMUP_ITERS,
+    WEIGHT_DECAY,
 )
-
-from student import training_loop
-from student.experiment_utils import save_experiment_results
-
+from storylm.training import training_loop
+from storylm.training.experiment_utils import save_experiment_results
 
 ARCHITECTURES = {
     "post_norm": {
@@ -68,73 +69,46 @@ ARCHITECTURES = {
     },
 }
 
+
 def format_learning_rate(learning_rate: float) -> str:
+    """Format a learning rate for an experiment directory name."""
     return f"{learning_rate:.0e}"
 
+
 def get_experiment_dir(
-        experiment_name: str,
-        num_iterations: int,
-        max_learning_rate: float,
+    experiment_name: str,
+    num_iterations: int,
+    max_learning_rate: float,
 ):
     """Return the output directory for an architecture experiment."""
-
     if experiment_name == "no_rmsnorm":
         lr_name = format_learning_rate(max_learning_rate)
 
         if num_iterations != NUM_ITERATIONS:
-            return (
-                EXPERIMENTS_DIR
-                / "architecture"
-                / "probes"
-                / (
-                    f"no_rmsnorm"
-                    f"_lr_{lr_name}"
-                    f"_steps_{num_iterations}"
-                )
-            )
+            return EXPERIMENTS_DIR / "architecture" / "probes" / (f"no_rmsnorm_lr_{lr_name}_steps_{num_iterations}")
 
-        return (
-            EXPERIMENTS_DIR
-            / "architecture"
-            / "no_rmsnorm"
-            / f"lr_{lr_name}"
-        )
+        return EXPERIMENTS_DIR / "architecture" / "no_rmsnorm" / f"lr_{lr_name}"
 
     if num_iterations != NUM_ITERATIONS:
-        return (
-            EXPERIMENTS_DIR
-            / "architecture"
-            / "probes"
-            / f"{experiment_name}_steps_{num_iterations}"
-        )
+        return EXPERIMENTS_DIR / "architecture" / "probes" / f"{experiment_name}_steps_{num_iterations}"
 
-    return (
-        EXPERIMENTS_DIR
-        / "architecture"
-        / experiment_name
-    )
+    return EXPERIMENTS_DIR / "architecture" / experiment_name
 
 
 def run_architecture_experiment(
-        experiment_name: str,
-        num_iterations: int,
-        max_learning_rate: float,
+    experiment_name: str,
+    num_iterations: int,
+    max_learning_rate: float,
 ) -> None:
     """Run one Transformer architecture ablation."""
     if experiment_name not in ARCHITECTURES:
-        raise ValueError(
-            f"Unknown architecture experiment: {experiment_name}"
-        )
+        raise ValueError(f"Unknown architecture experiment: {experiment_name}")
 
     if not TRAINING_TOKENS_PATH.exists():
-        raise FileNotFoundError(
-            f"Training tokens not found: {TRAINING_TOKENS_PATH}"
-        )
+        raise FileNotFoundError(f"Training tokens not found: {TRAINING_TOKENS_PATH}")
 
     if not VALIDATION_TOKENS_PATH.exists():
-        raise FileNotFoundError(
-            f"Validation tokens not found: {VALIDATION_TOKENS_PATH}"
-        )
+        raise FileNotFoundError(f"Validation tokens not found: {VALIDATION_TOKENS_PATH}")
 
     random.seed(SEED)
     np.random.seed(SEED)
@@ -142,11 +116,7 @@ def run_architecture_experiment(
 
     architecture = ARCHITECTURES[experiment_name]
 
-    experiment_dir = get_experiment_dir(
-        experiment_name,
-        num_iterations,
-        max_learning_rate
-    )
+    experiment_dir = get_experiment_dir(experiment_name, num_iterations, max_learning_rate)
     experiment_dir.mkdir(parents=True, exist_ok=True)
 
     results_path = experiment_dir / "results.json"
@@ -159,14 +129,10 @@ def run_architecture_experiment(
         checkpoint_path = None
 
     if results_path.exists():
-        raise FileExistsError(
-            f"Experiment results already exist: {results_path}"
-        )
+        raise FileExistsError(f"Experiment results already exist: {results_path}")
 
     if checkpoint_path is not None and checkpoint_path.exists():
-        raise FileExistsError(
-            f"Experiment checkpoint already exists: {checkpoint_path}"
-        )
+        raise FileExistsError(f"Experiment checkpoint already exists: {checkpoint_path}")
 
     min_learning_rate = MIN_LR_RATIO * max_learning_rate
 
@@ -187,11 +153,7 @@ def run_architecture_experiment(
         )
         checkpoint_interval = num_iterations
 
-    total_tokens = (
-        BATCH_SIZE
-        * num_iterations
-        * CONTEXT_LENGTH
-    )
+    total_tokens = BATCH_SIZE * num_iterations * CONTEXT_LENGTH
 
     print(f"\n{'=' * 60}")
     print(f"Architecture experiment: {experiment_name}")
@@ -213,85 +175,71 @@ def run_architecture_experiment(
     print(f"Eval interval:     {eval_interval}")
     print(f"Max LR:            {max_learning_rate}")
 
-    model, train_losses, validation_losses, eval_steps, eval_times = (
-        training_loop.train_model(
-            vocab_size=VOCAB_SIZE,
-            training_tokens_path=str(TRAINING_TOKENS_PATH),
-            validation_tokens_path=str(VALIDATION_TOKENS_PATH),
-            num_iterations=num_iterations,
-            batch_size=BATCH_SIZE,
-            context_length=CONTEXT_LENGTH,
-            d_model=D_MODEL,
-            num_layers=NUM_LAYERS,
-            num_heads=NUM_HEADS,
-            d_ff=architecture["d_ff"],
-            theta=THETA,
-            betas=BETAS,
-            eps=EPS,
-            weight_decay=WEIGHT_DECAY,
-            max_l2_norm=MAX_L2_NORM,
-            max_learning_rate=max_learning_rate,
-            min_learning_rate=min_learning_rate,
-            warmup_iters=warmup_iters,
-            cosine_cycle_iters=cosine_cycle_iters,
-            device=DEVICE,
-            dtype=DTYPE,
-            eval_interval=eval_interval,
-            num_eval_batches=NUM_EVAL_BATCHES,
-            eval_batch_size=BATCH_SIZE,
-            checkpoint_interval=checkpoint_interval,
-            checkpoint_path=(
-                str(checkpoint_path)
-                if checkpoint_path is not None
-                else None
-            ),
-            use_rmsnorm=architecture["use_rmsnorm"],
-            norm_style=architecture["norm_style"],
-            use_rope=architecture["use_rope"],
-            ffn_type=architecture["ffn_type"],
-        )
+    model, train_losses, validation_losses, eval_steps, eval_times = training_loop.train_model(
+        vocab_size=VOCAB_SIZE,
+        training_tokens_path=str(TRAINING_TOKENS_PATH),
+        validation_tokens_path=str(VALIDATION_TOKENS_PATH),
+        num_iterations=num_iterations,
+        batch_size=BATCH_SIZE,
+        context_length=CONTEXT_LENGTH,
+        d_model=D_MODEL,
+        num_layers=NUM_LAYERS,
+        num_heads=NUM_HEADS,
+        d_ff=architecture["d_ff"],
+        theta=THETA,
+        betas=BETAS,
+        eps=EPS,
+        weight_decay=WEIGHT_DECAY,
+        max_l2_norm=MAX_L2_NORM,
+        max_learning_rate=max_learning_rate,
+        min_learning_rate=min_learning_rate,
+        warmup_iters=warmup_iters,
+        cosine_cycle_iters=cosine_cycle_iters,
+        device=DEVICE,
+        dtype=DTYPE,
+        eval_interval=eval_interval,
+        num_eval_batches=NUM_EVAL_BATCHES,
+        eval_batch_size=BATCH_SIZE,
+        checkpoint_interval=checkpoint_interval,
+        checkpoint_path=(str(checkpoint_path) if checkpoint_path is not None else None),
+        use_rmsnorm=architecture["use_rmsnorm"],
+        norm_style=architecture["norm_style"],
+        use_rope=architecture["use_rope"],
+        ffn_type=architecture["ffn_type"],
     )
 
     config = {
         "experiment_name": experiment_name,
         "experiment_type": "architecture_ablation",
         "is_full_run": is_full_run,
-
         "training_tokens_path": str(TRAINING_TOKENS_PATH),
         "validation_tokens_path": str(VALIDATION_TOKENS_PATH),
-
         "vocab_size": VOCAB_SIZE,
         "num_iterations": num_iterations,
         "batch_size": BATCH_SIZE,
         "eval_batch_size": BATCH_SIZE,
         "total_training_tokens": total_tokens,
-
         "context_length": CONTEXT_LENGTH,
         "d_model": D_MODEL,
         "num_layers": NUM_LAYERS,
         "num_heads": NUM_HEADS,
         "d_ff": architecture["d_ff"],
         "theta": THETA,
-
         "betas": BETAS,
         "eps": EPS,
         "weight_decay": WEIGHT_DECAY,
         "max_l2_norm": MAX_L2_NORM,
-
         "max_learning_rate": max_learning_rate,
         "min_learning_rate": min_learning_rate,
         "warmup_iters": warmup_iters,
         "cosine_cycle_iters": cosine_cycle_iters,
-
         "eval_interval": eval_interval,
         "num_eval_batches": NUM_EVAL_BATCHES,
         "checkpoint_interval": checkpoint_interval,
-
         "use_rmsnorm": architecture["use_rmsnorm"],
         "norm_style": architecture["norm_style"],
         "use_rope": architecture["use_rope"],
         "ffn_type": architecture["ffn_type"],
-
         "device": str(DEVICE),
         "dtype": str(DTYPE),
         "seed": SEED,
@@ -304,13 +252,11 @@ def run_architecture_experiment(
         validation_losses,
         eval_steps,
         eval_times,
+        project_root=PROJECT_ROOT,
     )
 
     if validation_losses:
-        print(
-            f"\nFinal validation loss: "
-            f"{validation_losses[-1]:.4f}"
-        )
+        print(f"\nFinal validation loss: {validation_losses[-1]:.4f}")
 
     del model
 
@@ -319,6 +265,7 @@ def run_architecture_experiment(
 
 
 def main() -> None:
+    """Run the command-line entry point."""
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -341,11 +288,7 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    run_architecture_experiment(
-        experiment_name=args.experiment,
-        num_iterations=args.steps,
-        max_learning_rate=args.lr
-    )
+    run_architecture_experiment(experiment_name=args.experiment, num_iterations=args.steps, max_learning_rate=args.lr)
 
 
 if __name__ == "__main__":

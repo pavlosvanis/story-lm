@@ -1,12 +1,12 @@
+"""Tokenizer round trips and comparisons with the GPT-2 reference encoding."""
+
 from __future__ import annotations
 
 import json
 import os
 import resource
-import sys
 
 import psutil
-import pytest
 import tiktoken
 
 from .adapters import get_tokenizer
@@ -50,9 +50,7 @@ def get_tokenizer_from_vocab_merges_path(
             cleaned_line = line.rstrip()
             if cleaned_line and len(cleaned_line.split(" ")) == 2:
                 gpt2_bpe_merges.append(tuple(cleaned_line.split(" ")))
-    # The GPT-2 tokenizer uses a remapped unicode encoding for bytes. Let's
-    # just return the original bytes, so we don't force students to use
-    # any particular encoding scheme.
+    # Convert GPT-2's printable byte representation to the raw-byte vocabulary.
     vocab = {
         gpt2_vocab_index: bytes([gpt2_byte_decoder[token] for token in gpt2_vocab_item])
         for gpt2_vocab_item, gpt2_vocab_index in gpt2_vocab.items()
@@ -245,7 +243,7 @@ def test_unicode_string_with_special_tokens_matches_tiktoken():
     assert reference_tokenizer.decode(reference_ids) == test_string
 
 
-# NOTE: test_overlapping_special_tokens is excluded from grading
+# Optional overlapping-special-token check; currently disabled.
 # def test_overlapping_special_tokens():
 #     tokenizer = get_tokenizer_from_vocab_merges_path(
 #         vocab_path=VOCAB_PATH,
@@ -414,7 +412,7 @@ def test_encode_iterable_tinystories_matches_tiktoken():
     assert reference_tokenizer.decode(reference_ids) == corpus_contents
 
 
-# NOTE: test_encode_iterable_memory_usage is excluded from grading
+# Optional Linux-specific streaming memory check; currently disabled.
 # @pytest.mark.skipif(
 #     not sys.platform.startswith("linux"),
 #     reason="rlimit support for non-linux systems is spotty.",
@@ -430,7 +428,7 @@ def test_encode_iterable_tinystories_matches_tiktoken():
 #             ids.append(_id)
 
 
-# NOTE: test_encode_memory_usage is excluded from grading
+# Optional Linux-specific whole-input memory check; currently disabled.
 # @pytest.mark.skipif(
 #     not sys.platform.startswith("linux"),
 #     reason="rlimit support for non-linux systems is spotty.",
@@ -451,17 +449,11 @@ def test_encode_iterable_tinystories_matches_tiktoken():
 
 @memory_limit(int(1e6))
 def _encode_iterable(tokenizer, iterable):
-    """
-    We place tokenizer.encode_iterable into a separate function so we can limit memory
-    for just this function. We set the memory limit to 1MB.
-    """
+    """Stream token IDs under the configured 1 MB memory limit."""
     yield from tokenizer.encode_iterable(iterable)
 
 
 @memory_limit(int(1e6))
 def _encode(tokenizer, text):
-    """
-    We place tokenizer.encode into a separate function so we can limit memory
-    for just this function. We set the memory limit to 1MB.
-    """
+    """Encode a complete input under the configured 1 MB memory limit."""
     return tokenizer.encode(text)

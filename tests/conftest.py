@@ -1,14 +1,19 @@
+"""Snapshot helpers and shared model fixtures for the reference tests."""
+
+import os
+import pickle
+from pathlib import Path
 from typing import TypeVar
+
 import numpy as np
 import pytest
-import os
-from pathlib import Path
 import torch
 from torch import Tensor
-import pickle
 
 
 class DEFAULT:
+    """Sentinel for omitted snapshot settings."""
+
     pass
 
 
@@ -49,13 +54,14 @@ class NumpySnapshot:
         test_name: str | type[DEFAULT] = DEFAULT,
         force_update: bool | type[DEFAULT] = DEFAULT,
     ):
-        """
-        Assert that the actual array(s) matches the snapshot.
+        """Compare arrays with the saved reference snapshot.
 
         Args:
-            actual: Single NumPy array or dictionary of named arrays
-            test_name: The name of the test (used for the snapshot file)
-            update: If True, update the snapshot instead of comparing
+            actual: A single array or a dictionary of named arrays.
+            rtol: Relative tolerance for floating-point comparisons.
+            atol: Absolute tolerance for floating-point comparisons.
+            test_name: Snapshot name, or the configured default.
+            force_update: Compatibility argument; comparisons use the saved snapshot.
         """
         if force_update is DEFAULT:
             force_update = self.default_force_update
@@ -96,15 +102,15 @@ class NumpySnapshot:
 
 
 class Snapshot:
+    """Compare arbitrary Python objects with saved pickle snapshots."""
+
     def __init__(
         self,
         snapshot_dir: str = "tests/_snapshots",
         default_force_update: bool = False,
         default_test_name: str | None = None,
     ):
-        """
-        Snapshot for arbitrary data types, saved as pickle files.
-        """
+        """Snapshot for arbitrary data types, saved as pickle files."""
         self.snapshot_dir = Path(snapshot_dir)
         os.makedirs(self.snapshot_dir, exist_ok=True)
         self.default_force_update = default_force_update
@@ -119,14 +125,13 @@ class Snapshot:
         test_name: str | type[DEFAULT] = DEFAULT,
         force_update: bool | type[DEFAULT] = DEFAULT,
     ):
-        """
-        Assert that the actual data matches the snapshot.
-        Args:
-            actual: Single object or dictionary of named objects
-            test_name: The name of the test (used for the snapshot file)
-            force_update: If True, update the snapshot instead of comparing
-        """
+        """Compare Python objects with the saved reference snapshot.
 
+        Args:
+            actual: A single object or a dictionary of named objects.
+            test_name: Snapshot name, or the configured default.
+            force_update: Compatibility argument; comparisons use the saved snapshot.
+        """
         if force_update is DEFAULT:
             force_update = self.default_force_update
         if test_name is DEFAULT:
@@ -152,8 +157,7 @@ class Snapshot:
 
 @pytest.fixture
 def snapshot(request):
-    """
-    Fixture providing snapshot testing functionality.
+    """Fixture providing snapshot testing functionality.
 
     Usage:
         def test_my_function(snapshot):
@@ -171,13 +175,12 @@ def snapshot(request):
 # Fixture that can be used in all tests
 @pytest.fixture
 def numpy_snapshot(request):
-    """
-    Fixture providing numpy snapshot testing functionality.
+    """Fixture providing numpy snapshot testing functionality.
 
     Usage:
         def test_my_function(numpy_snapshot):
             result = my_function()
-            numpy_snapshot.assert_match(result, "my_test_name")
+            numpy_snapshot.assert_match(result, test_name="my_test_name")
     """
     force_update = False
 
@@ -193,8 +196,9 @@ def numpy_snapshot(request):
 
 @pytest.fixture
 def ts_state_dict(request):
-    from .common import FIXTURES_PATH
     import json
+
+    from .common import FIXTURES_PATH
 
     state_dict = torch.load(FIXTURES_PATH / "ts_tests" / "model.pt", map_location="cpu")
     config = json.load(open(FIXTURES_PATH / "ts_tests" / "model_config.json"))

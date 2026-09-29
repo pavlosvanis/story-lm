@@ -1,3 +1,5 @@
+"""Reference checks for AdamW and the cosine learning-rate schedule."""
+
 import numpy
 import torch
 
@@ -27,18 +29,15 @@ def _optimize(opt_class) -> torch.Tensor:
 
 
 def test_adamw(numpy_snapshot):
+    """Compare AdamW updates with PyTorch or the saved reference result.
+
+    Equivalent weight-decay formulas can differ due to floating-point rounding,
+    so either reference is accepted within the specified tolerance.
     """
-    Our reference implementation yields slightly different results than the
-    PyTorch AdamW, since there are a couple different ways that you can apply
-    weight decay that are equivalent in principle, but differ in practice due to
-    floating point behavior. So, we test that the provided implementation matches
-    _either_ our reference implementation's expected results or those from the PyTorch AdamW.
-    """
-    # expected_weights = torch.load(FIXTURES_PATH / "adamw_expected_params.pt")
     pytorch_weights = _optimize(torch.optim.AdamW)
     actual_weights = _optimize(get_adamw_cls())
 
-    # Might need to exit early if the weights match pytorch, since that should also be valid
+    # Accept PyTorch's result before checking the saved reference.
     matches_pytorch = torch.allclose(actual_weights, pytorch_weights, atol=1e-4)
     if matches_pytorch:
         return

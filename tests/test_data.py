@@ -1,3 +1,5 @@
+"""Batch shapes, next-token alignment, sampling, and device checks."""
+
 import math
 from collections import Counter
 
@@ -42,10 +44,7 @@ def test_get_batch():
     standard_deviation = math.sqrt(
         (num_iters * batch_size) * (1 / num_possible_starting_indices) * (1 - (1 / num_possible_starting_indices))
     )
-    # Range for expected outcomes (mu +/- 5sigma). For a given index,
-    # this should happen 99.99994% of the time of the time.
-    # So, in the case where we have 93 possible start indices,
-    # the entire test should pass with 99.9944202% of the time
+    # Allow five standard deviations around each index's expected count.
     occurrences_lower_bound = expected_count - 5 * standard_deviation
     occurrences_upper_bound = expected_count + 5 * standard_deviation
 

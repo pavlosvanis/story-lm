@@ -8,6 +8,7 @@ __pycache__/
 
 # Testing / tooling
 .pytest_cache/
+.ruff_cache/
 .idea/
 
 # macOS
@@ -22,3 +23,7 @@ experiments/**/checkpoint.pt
 # Large tokenized datasets
 artifacts/tinystories_train_tokens.npy
 artifacts/tinystories_valid_tokens.npy
+
+# Local coursework reference documents
+/HW1 Instr.pdf
+/exp.pdf

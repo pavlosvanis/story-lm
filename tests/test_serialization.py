@@ -1,3 +1,5 @@
+"""Checkpoint round-trip checks for model and optimizer state."""
+
 import numpy
 import torch
 import torch.nn as nn
@@ -68,7 +70,7 @@ def test_checkpointing(tmp_path):
         betas=(0.9, 0.999),
         eps=1e-8,
     )
-    # Use 1000 optimization steps for testing
+    # Populate optimizer moments before saving the checkpoint.
     it = 0
     for _ in range(num_iters):
         optimizer.zero_grad()
@@ -111,11 +113,11 @@ def test_checkpointing(tmp_path):
     assert set(original_model_state.keys()) == set(new_model_state.keys())
     assert set(original_optimizer_state.keys()) == set(new_optimizer_state.keys())
 
-    # compare the model state dicts
+    # Compare the model state dictionaries.
     for key in original_model_state.keys():
         numpy.testing.assert_allclose(
             original_model_state[key].detach().numpy(),
             new_model_state[key].detach().numpy(),
         )
-    # compare the optimizer state dicts
+    # Compare the optimizer state dictionaries.
     assert are_optimizers_equal(original_optimizer_state, new_optimizer_state)

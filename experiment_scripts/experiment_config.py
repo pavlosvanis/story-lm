@@ -1,3 +1,5 @@
+"""Shared reference settings for the TinyStories experiments."""
+
 from pathlib import Path
 
 import torch
@@ -41,7 +43,7 @@ WARMUP_ITERS = int(0.02 * NUM_ITERATIONS)
 MIN_LR_RATIO = 0.1  # scale minimum LR relative to maximum LR
 COSINE_CYCLE_ITERS = NUM_ITERATIONS - 1
 
-BASE_MAX_LEARNING_RATE = 3e-3 # found from lr_sweep experiment
+BASE_MAX_LEARNING_RATE = 3e-3  # found from lr_sweep experiment
 
 # Validation
 EVAL_INTERVAL = 100

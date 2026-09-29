@@ -1,0 +1,44 @@
+"""Scaled dot-product attention with optional masking."""
+
+import math
+
+from einops import einsum
+from jaxtyping import Bool, Float
+from torch import Tensor
+
+from storylm.model.softmax import softmax
+
+
+def scaled_dot_product_attention(
+    Q: Float[Tensor, "... queries d_k"],
+    K: Float[Tensor, "... keys d_k"],
+    V: Float[Tensor, "... values d_v"],
+    mask: Bool[Tensor, "... queries keys"] | None = None,
+) -> Float[Tensor, "... queries d_v"]:
+    """Compute scaled dot-product attention.
+
+    Computes query-key similarity scores, scales them by the square root of
+    the key dimension, optionally applies an attention mask, and returns the
+    weighted sum of the value vectors.
+
+    Args:
+        Q: Query vectors.
+        K: Key vectors.
+        V: Value vectors.
+        mask: Optional boolean attention mask. True entries are allowed to
+            attend and False entries are masked out.
+
+    Returns:
+        Attention-weighted value vectors.
+    """
+    attention_scores = einsum(Q, K, " ... queries d_k, ... keys d_k -> ... queries keys")
+    d_k = Q.shape[-1]
+    pre_softmax_attention_weights = attention_scores / math.sqrt(d_k)
+
+    if mask is not None:
+        # True entries are allowed; mask out the remaining positions.
+        pre_softmax_attention_weights = pre_softmax_attention_weights.masked_fill(~mask, float("-inf"))
+
+    attention_weights = softmax(pre_softmax_attention_weights, dim=-1)
+
+    return attention_weights @ V

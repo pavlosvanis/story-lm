@@ -1,6 +1,6 @@
 {
-    "prompt": "Tom was a kid who liked to play with stuffed animal toys. However, one day his mom told him that he had to start studying more",
-    "max_new_tokens": 256,
+    "prompt": "Once upon a time",
+    "max_new_tokens": 32,
     "temperature": 0.8,
     "top_p": 0.9,
     "seed": 42,

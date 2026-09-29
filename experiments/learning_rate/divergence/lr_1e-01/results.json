@@ -2,8 +2,8 @@
   "config": {
     "experiment_name": "lr_1e-01",
     "experiment_type": "learning_rate_divergence_probe",
-    "training_tokens_path": "/Users/pavlosvanis/Documents/Programming/cs599-fall26-hw1/artifacts/tinystories_train_tokens.npy",
-    "validation_tokens_path": "/Users/pavlosvanis/Documents/Programming/cs599-fall26-hw1/artifacts/tinystories_valid_tokens.npy",
+    "training_tokens_path": "artifacts/tinystories_train_tokens.npy",
+    "validation_tokens_path": "artifacts/tinystories_valid_tokens.npy",
     "vocab_size": 10000,
     "num_iterations": 500,
     "batch_size": 32,

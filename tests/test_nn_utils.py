@@ -1,3 +1,5 @@
+"""Numerical checks for softmax, cross-entropy, and gradient clipping."""
+
 import numpy
 import torch
 import torch.nn.functional as F

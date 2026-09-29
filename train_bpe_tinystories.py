@@ -1,7 +1,9 @@
-import time
-import pickle
+"""Train and serialize the TinyStories byte-level BPE tokenizer."""
 
-from student.bpe_training import train_bpe
+import pickle
+import time
+
+from storylm.tokenization.bpe_training import train_bpe
 
 if __name__ == "__main__":
     input_path = "data/TinyStoriesV2-GPT4-train.txt"
