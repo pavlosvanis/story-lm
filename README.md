@@ -19,6 +19,8 @@ The command loads the saved model and opens a local browser page. Enter a story 
 
 Generation runs in a background server thread. The letter-by-letter reveal happens after the model returns its completion; it is a display effect rather than live token streaming. The interface uses Python's standard library and browser JavaScript. Node.js is only needed for the optional JavaScript tests.
 
+![StoryLM.png](screenshots%2FStoryLM.png)
+
 For command-line generation:
 
 ```bash
