@@ -44,6 +44,19 @@ def build_parser() -> argparse.ArgumentParser:
         help="PyTorch device, such as cpu, mps, or cuda; auto selects an available device.",
     )
 
+    gui = commands.add_parser("gui", help="Open the desktop story writer.")
+    gui.add_argument(
+        "--artifacts-dir",
+        type=Path,
+        default=Path("artifacts"),
+        help="Directory containing model and tokenizer artifacts (default: artifacts).",
+    )
+    gui.add_argument(
+        "--device",
+        default="auto",
+        help="PyTorch device, such as cpu, mps, or cuda; auto selects an available device.",
+    )
+
     generate = commands.add_parser("generate", help="Continue a story prompt.")
 
     generate.add_argument(
@@ -99,6 +112,8 @@ def main() -> None:
             _prepare(args)
         elif args.command == "train":
             _train(args)
+        elif args.command == "gui":
+            _gui(args)
         elif args.command == "generate":
             _generate(args)
     except (OSError, ValueError) as error:
@@ -126,6 +141,13 @@ def _train(args: argparse.Namespace) -> None:
         device=args.device,
     )
     print(f"Model ready: {trained.model_dir}")
+
+
+def _gui(args: argparse.Namespace) -> None:
+    """Open the desktop writer with the selected generation artifacts."""
+    from storylm.gui import launch_gui
+
+    launch_gui(args.artifacts_dir, device=args.device)
 
 
 def _generate(args: argparse.Namespace) -> None:
