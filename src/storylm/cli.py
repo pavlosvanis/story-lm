@@ -8,7 +8,7 @@ def build_parser() -> argparse.ArgumentParser:
     """Define the StoryLM commands and their options."""
     parser = argparse.ArgumentParser(
         prog="storylm",
-        description="Prepare TinyStories data and generate stories with a Transformer built from scratch.",
+        description="Prepare data, train a Transformer from scratch, and generate stories.",
     )
     commands = parser.add_subparsers(dest="command", required=True)
     prepare = commands.add_parser("prepare", help="Prepare or reuse TinyStories data and tokenizer artifacts.")
@@ -23,6 +23,25 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=Path("artifacts"),
         help="Directory for tokenizer files and token arrays (default: artifacts).",
+    )
+
+    train = commands.add_parser("train", help="Train the selected TinyStories model or reuse existing artifacts.")
+    train.add_argument(
+        "--data-dir",
+        type=Path,
+        default=Path("data"),
+        help="Directory for downloaded raw text files (default: data).",
+    )
+    train.add_argument(
+        "--artifacts-dir",
+        type=Path,
+        default=Path("artifacts"),
+        help="Directory for data and model artifacts; use a separate directory for another training run.",
+    )
+    train.add_argument(
+        "--device",
+        default="auto",
+        help="PyTorch device, such as cpu, mps, or cuda; auto selects an available device.",
     )
 
     generate = commands.add_parser("generate", help="Continue a story prompt.")
@@ -78,6 +97,8 @@ def main() -> None:
     try:
         if args.command == "prepare":
             _prepare(args)
+        elif args.command == "train":
+            _train(args)
         elif args.command == "generate":
             _generate(args)
     except (OSError, ValueError) as error:
@@ -93,6 +114,18 @@ def _prepare(args: argparse.Namespace) -> None:
         artifacts_dir=args.artifacts_dir,
     )
     print(f"Prepared artifacts: {prepared.vocab_path.parent}")
+
+
+def _train(args: argparse.Namespace) -> None:
+    """Train or reuse the selected model and report its directory."""
+    from storylm.training.workflow import train_tinystories
+
+    trained = train_tinystories(
+        data_dir=args.data_dir,
+        artifacts_dir=args.artifacts_dir,
+        device=args.device,
+    )
+    print(f"Model ready: {trained.model_dir}")
 
 
 def _generate(args: argparse.Namespace) -> None:
