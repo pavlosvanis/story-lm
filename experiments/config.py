@@ -7,7 +7,7 @@ import torch
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
-EXPERIMENTS_DIR = PROJECT_ROOT / "experiments"
+RESULTS_DIR = PROJECT_ROOT / "experiments" / "results"
 
 TRAINING_TOKENS_PATH = ARTIFACTS_DIR / "tinystories_train_tokens.npy"
 VALIDATION_TOKENS_PATH = ARTIFACTS_DIR / "tinystories_valid_tokens.npy"

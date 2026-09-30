@@ -3,16 +3,28 @@
 import argparse
 from pathlib import Path
 
-from storylm.inference.generator import StoryGenerator
-
 
 def build_parser() -> argparse.ArgumentParser:
-    """Define the StoryLM commands and generation options."""
+    """Define the StoryLM commands and their options."""
     parser = argparse.ArgumentParser(
         prog="storylm",
-        description="Generate story continuations with a Transformer built from scratch.",
+        description="Prepare TinyStories data and generate stories with a Transformer built from scratch.",
     )
     commands = parser.add_subparsers(dest="command", required=True)
+    prepare = commands.add_parser("prepare", help="Prepare or reuse TinyStories data and tokenizer artifacts.")
+    prepare.add_argument(
+        "--data-dir",
+        type=Path,
+        default=Path("data"),
+        help="Directory for downloaded raw text files (default: data).",
+    )
+    prepare.add_argument(
+        "--artifacts-dir",
+        type=Path,
+        default=Path("artifacts"),
+        help="Directory for tokenizer files and token arrays (default: artifacts).",
+    )
+
     generate = commands.add_parser("generate", help="Continue a story prompt.")
 
     generate.add_argument(
@@ -59,24 +71,45 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
-    """Load the selected artifacts and generate a story from CLI arguments."""
+    """Run the selected StoryLM command."""
     parser = build_parser()
     args = parser.parse_args()
 
     try:
-        generator = StoryGenerator.from_artifacts(
-            args.artifacts_dir,
-            device=args.device,
-        )
-        result = generator.generate(
-            args.prompt,
-            max_new_tokens=args.max_new_tokens,
-            temperature=args.temperature,
-            top_p=args.top_p,
-            seed=args.seed,
-        )
-    except (FileNotFoundError, ValueError) as error:
+        if args.command == "prepare":
+            _prepare(args)
+        elif args.command == "generate":
+            _generate(args)
+    except (OSError, ValueError) as error:
         parser.error(str(error))
+
+
+def _prepare(args: argparse.Namespace) -> None:
+    """Prepare data and report the artifact directory."""
+    from storylm.data.preparation import prepare_tinystories
+
+    prepared = prepare_tinystories(
+        data_dir=args.data_dir,
+        artifacts_dir=args.artifacts_dir,
+    )
+    print(f"Prepared artifacts: {prepared.vocab_path.parent}")
+
+
+def _generate(args: argparse.Namespace) -> None:
+    """Load the selected artifacts and print a story continuation."""
+    from storylm.inference.generator import StoryGenerator
+
+    generator = StoryGenerator.from_artifacts(
+        args.artifacts_dir,
+        device=args.device,
+    )
+    result = generator.generate(
+        args.prompt,
+        max_new_tokens=args.max_new_tokens,
+        temperature=args.temperature,
+        top_p=args.top_p,
+        seed=args.seed,
+    )
 
     print("PROMPT")
     print(result.prompt)

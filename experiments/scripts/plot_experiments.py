@@ -6,10 +6,10 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
-from experiment_scripts.experiment_config import (
+from experiments.config import (
     CONTEXT_LENGTH,
-    EXPERIMENTS_DIR,
     PROJECT_ROOT,
+    RESULTS_DIR,
 )
 
 FIGURE_DIR = PROJECT_ROOT / "figures"
@@ -82,7 +82,7 @@ def plot_learning_rate_sweep() -> None:
     labels = []
 
     for experiment_name, label in learning_rates:
-        result_path = EXPERIMENTS_DIR / "learning_rate" / experiment_name / "results.json"
+        result_path = RESULTS_DIR / "learning_rate" / experiment_name / "results.json"
 
         if not result_path.exists():
             print(f"Skipping missing result: {result_path}")
@@ -107,15 +107,15 @@ def plot_learning_rate_stability_probe() -> None:
     """Plot the first 500 steps of the learning-rate stability probes."""
     experiments = [
         (
-            EXPERIMENTS_DIR / "learning_rate" / "lr_3e-03" / "results.json",
+            RESULTS_DIR / "learning_rate" / "lr_3e-03" / "results.json",
             r"$3 \times 10^{-3}$",
         ),
         (
-            EXPERIMENTS_DIR / "learning_rate" / "divergence" / "lr_1e-02" / "results.json",
+            RESULTS_DIR / "learning_rate" / "divergence" / "lr_1e-02" / "results.json",
             r"$1 \times 10^{-2}$",
         ),
         (
-            EXPERIMENTS_DIR / "learning_rate" / "divergence" / "lr_1e-01" / "results.json",
+            RESULTS_DIR / "learning_rate" / "divergence" / "lr_1e-01" / "results.json",
             r"$1 \times 10^{-1}$",
         ),
     ]
@@ -160,7 +160,7 @@ def plot_learning_rate_stability_probe() -> None:
 
 def plot_batch_size_sweep() -> None:
     """Plot batch-size comparisons against optimization steps and training tokens."""
-    batch_dir = EXPERIMENTS_DIR / "batch_size"
+    batch_dir = RESULTS_DIR / "batch_size"
 
     batch_results = []
 
@@ -172,7 +172,7 @@ def plot_batch_size_sweep() -> None:
             batch_results.append((batch_size, result_path))
 
     # Reuse batch 32 from the optimal LR experiment.
-    baseline_path = EXPERIMENTS_DIR / "learning_rate" / "lr_3e-03" / "results.json"
+    baseline_path = RESULTS_DIR / "learning_rate" / "lr_3e-03" / "results.json"
 
     if baseline_path.exists():
         batch_results.append((32, baseline_path))
@@ -231,33 +231,33 @@ def plot_batch_size_sweep() -> None:
 
 def plot_architecture_ablations() -> None:
     """Plot normalization, positional embedding, and feed-forward comparisons."""
-    baseline_path = EXPERIMENTS_DIR / "learning_rate" / "lr_3e-03" / "results.json"
+    baseline_path = RESULTS_DIR / "learning_rate" / "lr_3e-03" / "results.json"
 
     comparisons = [
         (
             baseline_path,
-            (EXPERIMENTS_DIR / "architecture" / "post_norm" / "results.json"),
+            (RESULTS_DIR / "architecture" / "post_norm" / "results.json"),
             ["Pre-Norm", "Post-Norm"],
             "Pre-Norm vs. Post-Norm",
             "pre_norm_vs_post_norm",
         ),
         (
             baseline_path,
-            (EXPERIMENTS_DIR / "architecture" / "nope" / "results.json"),
+            (RESULTS_DIR / "architecture" / "nope" / "results.json"),
             ["RoPE", "NoPE"],
             "RoPE vs. NoPE",
             "rope_vs_nope",
         ),
         (
             baseline_path,
-            (EXPERIMENTS_DIR / "architecture" / "silu" / "results.json"),
+            (RESULTS_DIR / "architecture" / "silu" / "results.json"),
             ["SwiGLU", "SiLU"],
             "SwiGLU vs. SiLU",
             "swiglu_vs_silu",
         ),
         (
             baseline_path,
-            (EXPERIMENTS_DIR / "architecture" / "no_rmsnorm" / "lr_1e-03" / "results.json"),
+            (RESULTS_DIR / "architecture" / "no_rmsnorm" / "lr_1e-03" / "results.json"),
             [
                 r"RMSNorm ($3 \times 10^{-3}$)",
                 r"No RMSNorm ($1 \times 10^{-3}$)",
@@ -297,11 +297,11 @@ def plot_no_rmsnorm_learning_rates() -> None:
     """Plot the learning-rate probes for the model without RMSNorm."""
     experiments = [
         (
-            EXPERIMENTS_DIR / "architecture" / "probes" / "no_rmsnorm_steps_500" / "results.json",
+            RESULTS_DIR / "architecture" / "probes" / "no_rmsnorm_steps_500" / "results.json",
             r"No RMSNorm, LR $3 \times 10^{-3}$",
         ),
         (
-            EXPERIMENTS_DIR / "architecture" / "probes" / "no_rmsnorm_lr_1e-03_steps_500" / "results.json",
+            RESULTS_DIR / "architecture" / "probes" / "no_rmsnorm_lr_1e-03_steps_500" / "results.json",
             r"No RMSNorm, LR $1 \times 10^{-3}$",
         ),
     ]

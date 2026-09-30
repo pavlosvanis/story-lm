@@ -1,11 +1,11 @@
-"""Probe training stability at large learning rates."""
+"""Compare learning rates with a fixed model and training schedule."""
 
 import random
 
 import numpy as np
 import torch
 
-from experiment_scripts.experiment_config import (
+from experiments.config import (
     BATCH_SIZE,
     BETAS,
     CHECKPOINT_INTERVAL,
@@ -17,13 +17,14 @@ from experiment_scripts.experiment_config import (
     DTYPE,
     EPS,
     EVAL_INTERVAL,
-    EXPERIMENTS_DIR,
     MAX_L2_NORM,
     MIN_LR_RATIO,
     NUM_EVAL_BATCHES,
     NUM_HEADS,
+    NUM_ITERATIONS,
     NUM_LAYERS,
     PROJECT_ROOT,
+    RESULTS_DIR,
     SEED,
     THETA,
     TRAINING_TOKENS_PATH,
@@ -32,22 +33,19 @@ from experiment_scripts.experiment_config import (
     WARMUP_ITERS,
     WEIGHT_DECAY,
 )
+from experiments.save_results import save_experiment_results
 from storylm.training import training_loop
-from storylm.training.experiment_utils import save_experiment_results
-
-PROBE_NUM_ITERATIONS = 500
-PROBE_MAX_LEARNING_RATE = 1e-1
 
 
-def run_divergence_experiment(max_learning_rate: float) -> None:
-    """Run one learning-rate stability probe."""
+def run_learning_rate_experiment(max_learning_rate: float) -> None:
+    """Train one learning-rate configuration."""
     random.seed(SEED)
     np.random.seed(SEED)
     torch.manual_seed(SEED)
 
     experiment_name = f"lr_{max_learning_rate:.0e}"
 
-    experiment_dir = EXPERIMENTS_DIR / "learning_rate" / "divergence" / experiment_name
+    experiment_dir = RESULTS_DIR / "learning_rate" / experiment_name
     experiment_dir.mkdir(parents=True, exist_ok=True)
 
     if not TRAINING_TOKENS_PATH.exists():
@@ -62,22 +60,17 @@ def run_divergence_experiment(max_learning_rate: float) -> None:
     if results_path.exists() or checkpoint_path.exists():
         raise FileExistsError(f"Experiment output already exists: {experiment_dir}")
 
-    min_learning_rate = MIN_LR_RATIO * max_learning_rate
-
     print(f"Training data:   {TRAINING_TOKENS_PATH}")
     print(f"Validation data: {VALIDATION_TOKENS_PATH}")
     print(f"Results dir:     {experiment_dir}")
-    print(f"Probe steps:     {PROBE_NUM_ITERATIONS}")
-    print(f"Max LR:          {max_learning_rate}")
-    print(f"Min LR:          {min_learning_rate}")
-    print(f"Warmup steps:    {WARMUP_ITERS}")
-    print(f"Cosine end:      {COSINE_CYCLE_ITERS}")
+
+    min_learning_rate = MIN_LR_RATIO * max_learning_rate
 
     model, train_losses, validation_losses, eval_steps, eval_times = training_loop.train_model(
         vocab_size=VOCAB_SIZE,
         training_tokens_path=str(TRAINING_TOKENS_PATH),
         validation_tokens_path=str(VALIDATION_TOKENS_PATH),
-        num_iterations=PROBE_NUM_ITERATIONS,
+        num_iterations=NUM_ITERATIONS,
         batch_size=BATCH_SIZE,
         context_length=CONTEXT_LENGTH,
         d_model=D_MODEL,
@@ -103,11 +96,10 @@ def run_divergence_experiment(max_learning_rate: float) -> None:
 
     config = {
         "experiment_name": experiment_name,
-        "experiment_type": "learning_rate_divergence_probe",
         "training_tokens_path": str(TRAINING_TOKENS_PATH),
         "validation_tokens_path": str(VALIDATION_TOKENS_PATH),
         "vocab_size": VOCAB_SIZE,
-        "num_iterations": PROBE_NUM_ITERATIONS,
+        "num_iterations": NUM_ITERATIONS,
         "batch_size": BATCH_SIZE,
         "context_length": CONTEXT_LENGTH,
         "d_model": D_MODEL,
@@ -141,21 +133,25 @@ def run_divergence_experiment(max_learning_rate: float) -> None:
         project_root=PROJECT_ROOT,
     )
 
-    if validation_losses:
-        print(f"\nFinal validation loss at step {eval_steps[-1]}: {validation_losses[-1]:.4f}")
-
     del model
-
-    if DEVICE == "mps":
-        torch.mps.empty_cache()
+    torch.mps.empty_cache()
 
 
-def run_divergence_probe() -> None:
-    """Compare large learning rates using the reference model configuration."""
-    print(f"\nStarting divergence probe with max LR = {PROBE_MAX_LEARNING_RATE}\n")
+def run_learning_rate_sweep() -> None:
+    """Run the configured learning-rate comparisons."""
+    # Hold architecture, data, seed, optimizer, and schedule settings fixed.
+    learning_rates = [1e-4, 3e-4, 6e-4, 1e-3, 3e-3]
 
-    run_divergence_experiment(PROBE_MAX_LEARNING_RATE)
+    for learning_rate in learning_rates:
+        print(f"\nStarting LR experiment: {learning_rate}\n")
+
+        try:
+            run_learning_rate_experiment(learning_rate)
+        except Exception as e:
+            print(f"Experiment with LR {learning_rate} failed: {e}")
+        finally:
+            torch.mps.empty_cache()
 
 
 if __name__ == "__main__":
-    run_divergence_probe()
+    run_learning_rate_sweep()

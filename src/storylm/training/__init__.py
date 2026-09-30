@@ -1,1 +1,1 @@
-"""Optimization, data loading, checkpointing, and training."""
+"""Optimization, checkpointing, and model training."""

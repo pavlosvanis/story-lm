@@ -2,7 +2,7 @@
 
 import json
 
-from storylm.training.experiment_utils import save_experiment_results
+from experiments.save_results import save_experiment_results
 
 
 def test_experiment_results_use_portable_paths(tmp_path):

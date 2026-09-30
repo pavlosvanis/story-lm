@@ -20,10 +20,19 @@ experiments/**/checkpoint.pt
 # Logs
 *.log
 
+# Downloaded training corpora
+/data/
+
 # Large tokenized datasets
 artifacts/tinystories_train_tokens.npy
 artifacts/tinystories_valid_tokens.npy
 
+# Temporary preparation outputs left by interrupted runs
+/artifacts/.storylm-prepare-*/
+
 # Local coursework reference documents
 /HW1 Instr.pdf
 /exp.pdf
+
+# Local session handoff
+/CONTEXT.md

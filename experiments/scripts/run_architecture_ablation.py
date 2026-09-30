@@ -6,7 +6,7 @@ import random
 import numpy as np
 import torch
 
-from experiment_scripts.experiment_config import (
+from experiments.config import (
     BASE_MAX_LEARNING_RATE,
     BATCH_SIZE,
     BETAS,
@@ -19,7 +19,6 @@ from experiment_scripts.experiment_config import (
     DTYPE,
     EPS,
     EVAL_INTERVAL,
-    EXPERIMENTS_DIR,
     MAX_L2_NORM,
     MIN_LR_RATIO,
     NUM_EVAL_BATCHES,
@@ -27,6 +26,7 @@ from experiment_scripts.experiment_config import (
     NUM_ITERATIONS,
     NUM_LAYERS,
     PROJECT_ROOT,
+    RESULTS_DIR,
     SEED,
     THETA,
     TRAINING_TOKENS_PATH,
@@ -35,8 +35,8 @@ from experiment_scripts.experiment_config import (
     WARMUP_ITERS,
     WEIGHT_DECAY,
 )
+from experiments.save_results import save_experiment_results
 from storylm.training import training_loop
-from storylm.training.experiment_utils import save_experiment_results
 
 ARCHITECTURES = {
     "post_norm": {
@@ -85,14 +85,14 @@ def get_experiment_dir(
         lr_name = format_learning_rate(max_learning_rate)
 
         if num_iterations != NUM_ITERATIONS:
-            return EXPERIMENTS_DIR / "architecture" / "probes" / (f"no_rmsnorm_lr_{lr_name}_steps_{num_iterations}")
+            return RESULTS_DIR / "architecture" / "probes" / (f"no_rmsnorm_lr_{lr_name}_steps_{num_iterations}")
 
-        return EXPERIMENTS_DIR / "architecture" / "no_rmsnorm" / f"lr_{lr_name}"
+        return RESULTS_DIR / "architecture" / "no_rmsnorm" / f"lr_{lr_name}"
 
     if num_iterations != NUM_ITERATIONS:
-        return EXPERIMENTS_DIR / "architecture" / "probes" / f"{experiment_name}_steps_{num_iterations}"
+        return RESULTS_DIR / "architecture" / "probes" / f"{experiment_name}_steps_{num_iterations}"
 
-    return EXPERIMENTS_DIR / "architecture" / experiment_name
+    return RESULTS_DIR / "architecture" / experiment_name
 
 
 def run_architecture_experiment(

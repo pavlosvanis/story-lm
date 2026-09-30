@@ -11,6 +11,7 @@ import torch
 from jaxtyping import Bool, Float, Int
 from torch import Tensor
 
+from storylm.data.data_loading import load_data
 from storylm.model.embedding import Embedding
 from storylm.model.linear import Linear
 from storylm.model.multi_head_self_attention import CausalMultiheadSelfAttention
@@ -26,7 +27,6 @@ from storylm.tokenization.tokenizer import Tokenizer
 from storylm.training.adamw import AdamW
 from storylm.training.checkpointing import load_checkpoint, save_checkpoint
 from storylm.training.cross_entropy import cross_entropy
-from storylm.training.data_loading import load_data
 from storylm.training.gradient_clipping import gradient_clipping
 from storylm.training.learning_rate_schedule import learning_rate_schedule
 

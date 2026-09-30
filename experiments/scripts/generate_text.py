@@ -2,17 +2,14 @@
 
 import argparse
 import json
-from pathlib import Path
 
+from experiments.config import ARTIFACTS_DIR, RESULTS_DIR
 from storylm.inference.generator import StoryGenerator
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-
-ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
 MODEL_DIR = ARTIFACTS_DIR / "final_model"
 
 WEIGHTS_PATH = MODEL_DIR / "weights.pt"
-OUTPUT_DIR = PROJECT_ROOT / "experiments" / "generation"
+OUTPUT_DIR = RESULTS_DIR / "generation"
 
 
 def parse_args() -> argparse.Namespace:

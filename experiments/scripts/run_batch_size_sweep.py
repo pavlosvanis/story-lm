@@ -5,7 +5,7 @@ import random
 import numpy as np
 import torch
 
-from experiment_scripts.experiment_config import (
+from experiments.config import (
     BASE_MAX_LEARNING_RATE,
     BETAS,
     CONTEXT_LENGTH,
@@ -14,13 +14,13 @@ from experiment_scripts.experiment_config import (
     DEVICE,
     DTYPE,
     EPS,
-    EXPERIMENTS_DIR,
     MAX_L2_NORM,
     MIN_LR_RATIO,
     NUM_EVAL_BATCHES,
     NUM_HEADS,
     NUM_LAYERS,
     PROJECT_ROOT,
+    RESULTS_DIR,
     SEED,
     THETA,
     TOTAL_TOKEN_BUDGET,
@@ -29,11 +29,11 @@ from experiment_scripts.experiment_config import (
     VOCAB_SIZE,
     WEIGHT_DECAY,
 )
-from experiment_scripts.experiment_config import (
+from experiments.config import (
     BATCH_SIZE as BASE_BATCH_SIZE,
 )
+from experiments.save_results import save_experiment_results
 from storylm.training import training_loop
-from storylm.training.experiment_utils import save_experiment_results
 
 BATCH_SIZES = [1, 16, 64, 112]
 
@@ -46,7 +46,7 @@ def run_batch_size_experiment(batch_size: int) -> None:
 
     experiment_name = f"batch_{batch_size}"
 
-    experiment_dir = EXPERIMENTS_DIR / "batch_size" / experiment_name
+    experiment_dir = RESULTS_DIR / "batch_size" / experiment_name
     experiment_dir.mkdir(parents=True, exist_ok=True)
 
     if not TRAINING_TOKENS_PATH.exists():

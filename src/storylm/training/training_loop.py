@@ -5,12 +5,12 @@ import time
 import numpy as np
 import torch
 
+from storylm.data.data_loading import load_data
 from storylm.model.transformer_lm import TransformerLM
 
 from .adamw import AdamW
 from .checkpointing import save_checkpoint
 from .cross_entropy import cross_entropy
-from .data_loading import load_data
 from .gradient_clipping import gradient_clipping
 from .learning_rate_schedule import learning_rate_schedule
 
