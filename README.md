@@ -160,7 +160,7 @@ StoryLM produces readable individual sentences, but longer stories can repeat ev
 
 ## Attribution and license
 
-The project originated in Boston University CS599 coursework adapted from [Stanford CS336's language-modeling assignment](https://github.com/stanford-cs336/assignment1-basics). The tokenizer, model, training implementation, experiments, artifact workflows, and browser demo are presented here as the StoryLM project. Inherited starter materials, tests, and reference fixtures retain their upstream notices.
+StoryLM began as Boston University CS599 coursework adapted from [Stanford CS336's language-modeling assignment](https://github.com/stanford-cs336/assignment1-basics). I implemented the tokenizer, Transformer, and training pipeline, ran the experiments, and extended the project with reusable artifact workflows, CLI commands, and a browser demo. Inherited starter materials, tests, and reference fixtures retain their upstream attribution.
 
 Training uses [TinyStories](https://huggingface.co/datasets/roneneldan/TinyStories), by Ronen Eldan and Yuanzhi Li ([paper](https://arxiv.org/abs/2305.07759)). The [pinned dataset card](https://huggingface.co/datasets/roneneldan/TinyStories/blob/f54c09fd23315a6f9c86f9dc80f725de7d8f9c64/README.md) specifies **CDLA-Sharing-1.0**; that dataset license is separate from this project's MIT software license.
 
