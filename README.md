@@ -2,7 +2,7 @@
 
 **A small story-writing language model built and trained from scratch in PyTorch.**
 
-StoryLM connects a byte-level BPE tokenizer, a decoder-only Transformer, a custom training pipeline, and a local browser demo. The selected model reached **1.6303 per-token validation cross-entropy** on TinyStories after **40,960,000 training token predictions**.
+StoryLM connects a byte-level BPE tokenizer, a decoder-only Transformer, a custom training pipeline, and a local browser demo. The selected model was trained on TinyStories within a **40,960,000 training token budget**.
 
 The project documents the decisions behind that model through learning-rate sweeps, fixed-token-budget batch comparisons, and architecture ablations. Trained weights and the matching tokenizer are included, so the demo can run without downloading the training corpus or retraining.
 
